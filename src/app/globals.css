@@ -1,0 +1,295 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-position-qb-background: var(--position-qb-background);
+  --color-position-qb-foreground: var(--position-qb-foreground);
+  --color-position-rb-background: var(--position-rb-background);
+  --color-position-rb-foreground: var(--position-rb-foreground);
+  --color-position-wr-background: var(--position-wr-background);
+  --color-position-wr-foreground: var(--position-wr-foreground);
+  --color-position-te-background: var(--position-te-background);
+  --color-position-te-foreground: var(--position-te-foreground);
+  --font-sans: var(--font-sans);
+  --font-mono: Geist Mono, monospace;
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --font-serif: Georgia, serif;
+  --radius: 0.5rem;
+  --tracking-tighter: calc(var(--tracking-normal) - 0.05em);
+  --tracking-tight: calc(var(--tracking-normal) - 0.025em);
+  --tracking-wide: calc(var(--tracking-normal) + 0.025em);
+  --tracking-wider: calc(var(--tracking-normal) + 0.05em);
+  --tracking-widest: calc(var(--tracking-normal) + 0.1em);
+  --tracking-normal: var(--tracking-normal);
+  --shadow-2xl: var(--shadow-2xl);
+  --shadow-xl: var(--shadow-xl);
+  --shadow-lg: var(--shadow-lg);
+  --shadow-md: var(--shadow-md);
+  --shadow: var(--shadow);
+  --shadow-sm: var(--shadow-sm);
+  --shadow-xs: var(--shadow-xs);
+  --shadow-2xs: var(--shadow-2xs);
+  --spacing: var(--spacing);
+  --letter-spacing: var(--letter-spacing);
+  --shadow-offset-y: var(--shadow-offset-y);
+  --shadow-offset-x: var(--shadow-offset-x);
+  --shadow-spread: var(--shadow-spread);
+  --shadow-blur: var(--shadow-blur);
+  --shadow-opacity: var(--shadow-opacity);
+  --color-shadow-color: var(--shadow-color);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-series-1: var(--series-1);
+  --color-series-2: var(--series-2);
+  --color-series-3: var(--series-3);
+  --color-series-4: var(--series-4);
+  --color-series-5: var(--series-5);
+  --color-series-6: var(--series-6);
+  --color-series-7: var(--series-7);
+  --color-series-8: var(--series-8);
+  --color-positive: var(--positive);
+  --color-negative: var(--negative);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+  --font-heading: var(--font-sans);
+}
+
+/* ---------------------------------------------------------------------------
+ * Palette: zinc neutrals with a teal brand accent, matching the
+ * Fantasy Hub visual language. Values are the Tailwind v4 oklch definitions
+ * for the named shades, so utility classes like `text-teal-500` sit exactly
+ * on top of the semantic tokens instead of drifting a shade away.
+ * ------------------------------------------------------------------------- */
+:root {
+  --radius: 0.625rem;
+
+  /* zinc-50 / zinc-900 */
+
+  /* Cards lift off the zinc-50 page with plain white. */
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0 0);
+
+  /* teal-500 on near-black — the brand fill, and readable at button sizes. */
+  --primary: oklch(0.852 0.199 91.936);
+  --primary-foreground: oklch(0.421 0.095 57.708);
+
+  /* zinc-100 / zinc-900 */
+  --secondary: oklch(0.967 0.001 286.375);
+  --secondary-foreground: oklch(0.21 0.006 285.885);
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.556 0 0);
+  --accent: oklch(0.97 0 0);
+  --accent-foreground: oklch(0.205 0 0);
+
+  /* rose-600 */
+  --destructive: oklch(0.577 0.245 27.325);
+
+  /* zinc-200, with a teal focus ring. */
+  --border: oklch(0.922 0 0);
+  --input: oklch(0.922 0 0);
+  --ring: oklch(0.708 0 0);
+
+  --sidebar: oklch(0.985 0 0);
+  --sidebar-foreground: oklch(0.145 0 0);
+  --sidebar-primary: oklch(0.681 0.162 75.834);
+  --sidebar-primary-foreground: oklch(0.987 0.026 102.212);
+  /* Active and hovered nav items pick up the brand tint (teal-50/teal-800). */
+  --sidebar-accent: oklch(0.97 0 0);
+  --sidebar-accent-foreground: oklch(0.205 0 0);
+  --sidebar-border: oklch(0.922 0 0);
+  --sidebar-ring: oklch(0.708 0 0);
+
+  /* RosterAudit-style position chips: QB red, RB green, WR cyan, TE amber. */
+  --position-qb-background: oklch(0.971 0.013 17.38);
+  --position-qb-foreground: oklch(0.505 0.213 27.518);
+  --position-rb-background: oklch(0.982 0.018 155.826);
+  --position-rb-foreground: oklch(0.448 0.119 151.328);
+  --position-wr-background: oklch(0.984 0.019 200.873);
+  --position-wr-foreground: oklch(0.45 0.085 224.283);
+  --position-te-background: oklch(0.987 0.022 95.277);
+  --position-te-foreground: oklch(0.473 0.137 46.201);
+
+  --font-sans: Geist, sans-serif;
+  --font-mono: Geist Mono, monospace;
+  --destructive-foreground: oklch(1 0 0);
+  --chart-1: oklch(0.87 0 0);
+  --chart-2: oklch(0.556 0 0);
+  --chart-3: oklch(0.439 0 0);
+  --chart-4: oklch(0.371 0 0);
+  --chart-5: oklch(0.269 0 0);
+  --font-serif: Georgia, serif;
+  --shadow-color: hsl(0 0% 0%);
+  --shadow-opacity: 0.18;
+  --shadow-blur: 2px;
+  --shadow-spread: 0px;
+  --shadow-offset-x: 0px;
+  --shadow-offset-y: 1px;
+  --letter-spacing: 0em;
+  --spacing: 0.25rem;
+  --shadow-2xs: 0px 1px 2px 0px hsl(0 0% 0% / 0.09);
+  --shadow-xs: 0px 1px 2px 0px hsl(0 0% 0% / 0.09);
+  --shadow-sm: 0px 1px 2px 0px hsl(0 0% 0% / 0.18), 0px 1px 2px -1px hsl(0 0% 0% / 0.18);
+  --shadow: 0px 1px 2px 0px hsl(0 0% 0% / 0.18), 0px 1px 2px -1px hsl(0 0% 0% / 0.18);
+  --shadow-md: 0px 1px 2px 0px hsl(0 0% 0% / 0.18), 0px 2px 4px -1px hsl(0 0% 0% / 0.18);
+  --shadow-lg: 0px 1px 2px 0px hsl(0 0% 0% / 0.18), 0px 4px 6px -1px hsl(0 0% 0% / 0.18);
+  --shadow-xl: 0px 1px 2px 0px hsl(0 0% 0% / 0.18), 0px 8px 10px -1px hsl(0 0% 0% / 0.18);
+  --shadow-2xl: 0px 1px 2px 0px hsl(0 0% 0% / 0.45);
+  --tracking-normal: 0em;
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
+
+  /* ---------------------------------------------------------------------
+   * Categorical series ramp.
+   *
+   * `--chart-1..5` above is a neutral grey scale — correct for a single
+   * series, useless for a dozen managers on one chart. These eight are
+   * hue-spaced around the wheel and held at a common lightness/chroma so no
+   * one line reads as "the important one", and they stay legible on the
+   * zinc-50 ground. The dark block re-lightens them for the zinc-950 ground.
+   * ------------------------------------------------------------------- */
+  --series-1: oklch(0.62 0.16 250);  /* blue */
+  --series-2: oklch(0.63 0.15 162);  /* emerald */
+  --series-3: oklch(0.64 0.19 25);   /* red */
+  --series-4: oklch(0.66 0.16 300);  /* purple */
+  --series-5: oklch(0.68 0.15 70);   /* amber */
+  --series-6: oklch(0.62 0.11 200);  /* cyan */
+  --series-7: oklch(0.64 0.17 350);  /* pink */
+  --series-8: oklch(0.60 0.12 130);  /* lime */
+
+  /* Result semantics, so "good/bad" stops being hardcoded emerald-600. */
+  --positive: oklch(0.596 0.145 163.225);
+  --negative: oklch(0.577 0.245 27.325);
+}
+
+.dark {
+  /* zinc-950 / zinc-50, with zinc-900 cards lifting off it. */
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.205 0 0);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.205 0 0);
+  --popover-foreground: oklch(0.985 0 0);
+
+  /* The brand fill is the same teal in both themes — it reads on either. */
+  --primary: oklch(0.795 0.184 86.047);
+  --primary-foreground: oklch(0.421 0.095 57.708);
+
+  /* zinc-800 / zinc-400 */
+  --secondary: oklch(0.274 0.006 286.033);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+  --accent: oklch(0.269 0 0);
+  --accent-foreground: oklch(0.985 0 0);
+
+  /* rose-400 */
+  --destructive: oklch(0.704 0.191 22.216);
+
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.556 0 0);
+
+  --sidebar: oklch(0.205 0 0);
+  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar-primary: oklch(0.795 0.184 86.047);
+  --sidebar-primary-foreground: oklch(0.987 0.026 102.212);
+  /* teal-950/45 with teal-200 text — the dark-mode twin of the light tint. */
+  --sidebar-accent: oklch(0.269 0 0);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.556 0 0);
+
+  --position-qb-background: oklch(0.258 0.092 26.042 / 55%);
+  --position-qb-foreground: oklch(0.704 0.191 22.216);
+  --position-rb-background: oklch(0.266 0.065 152.934 / 55%);
+  --position-rb-foreground: oklch(0.792 0.209 151.711);
+  --position-wr-background: oklch(0.302 0.056 229.695 / 55%);
+  --position-wr-foreground: oklch(0.865 0.127 207.078);
+  --position-te-background: oklch(0.279 0.077 45.635 / 55%);
+  --position-te-foreground: oklch(0.828 0.189 84.429);
+  --destructive-foreground: oklch(0 0 0);
+  --chart-1: oklch(0.87 0 0);
+  --chart-2: oklch(0.556 0 0);
+  --chart-3: oklch(0.439 0 0);
+  --chart-4: oklch(0.371 0 0);
+  --chart-5: oklch(0.269 0 0);
+  --radius: 0.5rem;
+  --font-sans: Geist, sans-serif;
+  --font-serif: Georgia, serif;
+  --font-mono: Geist Mono, monospace;
+  --shadow-color: hsl(0 0% 0%);
+  --shadow-opacity: 0.18;
+  --shadow-blur: 2px;
+  --shadow-spread: 0px;
+  --shadow-offset-x: 0px;
+  --shadow-offset-y: 1px;
+  --letter-spacing: 0em;
+  --spacing: 0.25rem;
+  --shadow-2xs: 0px 1px 2px 0px hsl(0 0% 0% / 0.09);
+  --shadow-xs: 0px 1px 2px 0px hsl(0 0% 0% / 0.09);
+  --shadow-sm: 0px 1px 2px 0px hsl(0 0% 0% / 0.18), 0px 1px 2px -1px hsl(0 0% 0% / 0.18);
+  --shadow: 0px 1px 2px 0px hsl(0 0% 0% / 0.18), 0px 1px 2px -1px hsl(0 0% 0% / 0.18);
+  --shadow-md: 0px 1px 2px 0px hsl(0 0% 0% / 0.18), 0px 2px 4px -1px hsl(0 0% 0% / 0.18);
+  --shadow-lg: 0px 1px 2px 0px hsl(0 0% 0% / 0.18), 0px 4px 6px -1px hsl(0 0% 0% / 0.18);
+  --shadow-xl: 0px 1px 2px 0px hsl(0 0% 0% / 0.18), 0px 8px 10px -1px hsl(0 0% 0% / 0.18);
+  --shadow-2xl: 0px 1px 2px 0px hsl(0 0% 0% / 0.45);
+
+  /* The same eight hues, lifted for the zinc-950 ground. */
+  --series-1: oklch(0.70 0.15 250);
+  --series-2: oklch(0.72 0.15 162);
+  --series-3: oklch(0.70 0.18 25);
+  --series-4: oklch(0.73 0.15 300);
+  --series-5: oklch(0.78 0.15 70);
+  --series-6: oklch(0.72 0.11 200);
+  --series-7: oklch(0.72 0.16 350);
+  --series-8: oklch(0.72 0.13 130);
+
+  --positive: oklch(0.765 0.177 163.223);
+  --negative: oklch(0.704 0.191 22.216);
+}
+
+@layer base {
+  * { @apply border-border outline-ring/50; }
+  html { @apply bg-background antialiased font-sans; }
+  body { @apply min-h-screen bg-background text-foreground;
+    letter-spacing: var(--tracking-normal); }
+}
