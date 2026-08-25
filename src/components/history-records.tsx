@@ -132,8 +132,9 @@ export function HistoryScoreTable({ rows, title, description, tone }: { rows: Sc
             <TableRow className="hover:bg-transparent">
               <TableHead className="w-10 pl-4 text-center">#</TableHead>
               <TableHead>Team</TableHead>
-              <TableHead className="text-right">Points</TableHead>
-              <TableHead className="pr-4 text-right">Season</TableHead>
+              <TableHead className="w-16 text-right">Points</TableHead>
+              <TableHead className="w-16 text-right">Season</TableHead>
+              <TableHead className="w-14 pr-4 text-right">Week</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -143,7 +144,7 @@ export function HistoryScoreTable({ rows, title, description, tone }: { rows: Sc
               return (
                 <TableRow className="relative" key={`${row.ownerId}-${row.season}-${row.week}`}>
                   <TableCell className="pl-4 text-center font-mono tabular-nums text-muted-foreground">{index + 1}</TableCell>
-                  <TableCell className="relative max-w-0 break-words text-xs font-medium sm:truncate sm:text-sm">
+                  <TableCell className="relative max-w-0 truncate pr-2 text-xs font-medium sm:text-sm">
                     <span
                       aria-hidden="true"
                       className="absolute inset-y-1 left-0 -z-10 rounded-sm"
@@ -151,10 +152,11 @@ export function HistoryScoreTable({ rows, title, description, tone }: { rows: Sc
                     />
                     {row.name}
                   </TableCell>
-                  <TableCell className="text-right font-mono font-semibold tabular-nums" style={{ color: accent }}>
+                  <TableCell className="whitespace-nowrap text-right font-mono text-xs font-semibold tabular-nums sm:text-sm" style={{ color: accent }}>
                     {num(row.points)}
                   </TableCell>
-                  <TableCell className="pr-4 text-right font-mono text-xs tabular-nums text-muted-foreground">{row.season} · Wk {row.week}</TableCell>
+                  <TableCell className="whitespace-nowrap text-right font-mono text-[0.6875rem] tabular-nums text-muted-foreground sm:text-xs">{row.season}</TableCell>
+                  <TableCell className="whitespace-nowrap pr-4 text-right font-mono text-[0.6875rem] tabular-nums text-muted-foreground sm:text-xs">{row.week}</TableCell>
                 </TableRow>
               );
             })}

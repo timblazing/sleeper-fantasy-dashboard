@@ -14,9 +14,9 @@ const initials = (name: string) => name.split(/\s|&/).filter(Boolean).slice(0, 2
 const pct = (value: number) => (value >= 99.95 ? ">99.9%" : value < 0.05 && value > 0 ? "<0.1%" : `${value.toFixed(1)}%`);
 
 const OUTLOOK: Record<PlayoffOutlook, { label: string; chip: string; bar: string }> = {
-  locked: { label: "Clinched", chip: "border-transparent bg-emerald-500/12 text-emerald-600 dark:text-emerald-400", bar: "bg-emerald-500" },
-  likely: { label: "Likely", chip: "border-transparent bg-sky-500/12 text-sky-600 dark:text-sky-400", bar: "bg-sky-500" },
-  bubble: { label: "Bubble", chip: "border-transparent bg-amber-500/12 text-amber-600 dark:text-amber-500", bar: "bg-amber-500" },
+  locked: { label: "Clinched", chip: "border-transparent bg-positive/12 text-positive", bar: "bg-positive" },
+  likely: { label: "Likely", chip: "border-transparent bg-series-1/12 text-series-1", bar: "bg-series-1" },
+  bubble: { label: "Bubble", chip: "border-transparent bg-warning/12 text-warning", bar: "bg-warning" },
   longshot: { label: "Long shot", chip: "border-transparent bg-muted text-muted-foreground", bar: "bg-muted-foreground/50" },
   eliminated: { label: "Eliminated", chip: "border-transparent bg-destructive/10 text-destructive", bar: "bg-destructive/40" },
 };

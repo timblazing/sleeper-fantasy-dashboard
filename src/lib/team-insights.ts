@@ -342,7 +342,7 @@ function buildTrajectory(context: LeagueValueContext, team: LeagueTeam, outlook:
   const dynasty = context.league.settings.type === 2;
   const window: TrajectoryWindow = valuePct >= 0.6 ? "Compete" : valuePct >= 0.35 ? "Retool" : "Rebuild";
   const type = dynasty ? "Dynasty" : context.league.settings.type === 1 ? "Keeper" : "Redraft";
-  const meta = [`${type} ${outlook.grade}`, outlook.label, `${ordinal(team.valueRank)} of ${teams} by value`].join(" \u00b7 ");
+  const meta = [`${type} ${outlook.grade}`, outlook.label, `${ordinal(team.valueRank)} of ${teams}`].join(" \u00b7 ");
 
   const detail = window === "Compete"
     ? dynasty

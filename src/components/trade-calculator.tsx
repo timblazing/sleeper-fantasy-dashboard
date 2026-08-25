@@ -44,10 +44,10 @@ const pickAsset = (pick: PickOption): StagedAsset => ({
 });
 
 const gradeTone = (grade: string) => grade.startsWith("A") || grade.startsWith("B")
-  ? "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950 dark:text-emerald-300"
+  ? "border-positive/30 bg-positive/10 text-positive"
   : grade.startsWith("C")
-    ? "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-300"
-    : "border-red-200 bg-red-50 text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-300";
+    ? "border-warning/30 bg-warning/10 text-warning"
+    : "border-negative/30 bg-negative/10 text-negative";
 
 function TeamSelect({ label, teams, value, onChange }: { label: string; teams: TradeLabData["teams"]; value: string; onChange: (value: string) => void }) {
   return <Select value={value} onValueChange={(next) => { if (next) onChange(next); }}>
@@ -181,7 +181,7 @@ function Verdict({ trade }: { trade: RaTrade }) {
       <div>
         <div className="flex justify-between text-sm"><span className="font-medium">You receive {formatter.format(trade.sideA.value)}</span><span className="font-medium">{formatter.format(trade.sideB.value)} you send</span></div>
         <div className="mt-2 flex h-3 overflow-hidden rounded-full bg-muted" role="img" aria-label={`You receive ${sharePercent}% of the traded value`}>
-          <div className="bg-emerald-500" style={{ width: `${sharePercent}%` }} />
+          <div className="bg-positive" style={{ width: `${sharePercent}%` }} />
           <div className="flex-1 bg-primary/60" />
         </div>
       </div>
@@ -190,7 +190,7 @@ function Verdict({ trade }: { trade: RaTrade }) {
         <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Age and decline risk</p>
         {trade.cliffWarnings.map((warning) => <div className="rounded-xl border p-4" key={`${warning.sleeperId}-${warning.side}`}>
           <div className="flex flex-wrap items-center gap-2">
-            <TriangleAlertIcon className="size-4 text-amber-600 dark:text-amber-400" />
+            <TriangleAlertIcon className="size-4 text-warning" />
             <span className="font-medium">{warning.name}</span>
             <PositionBadge position={warning.position} />
             <Badge variant="secondary">{warning.riskLevel} risk</Badge>

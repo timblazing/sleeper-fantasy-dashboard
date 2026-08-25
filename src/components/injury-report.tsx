@@ -20,7 +20,7 @@ function InjuryRow({ entry, leagueId, username }: { entry: InjuryEntry; leagueId
   // A "Did Not Participate" is the strongest practice signal there is; colouring it keeps the
   // reader from having to read three words to find the one that matters.
   const practiceTone = practice?.toLowerCase().startsWith("did not") ? "text-destructive"
-    : practice?.toLowerCase().startsWith("limited") ? "text-amber-600 dark:text-amber-500"
+    : practice?.toLowerCase().startsWith("limited") ? "text-warning"
     : undefined;
 
   return (

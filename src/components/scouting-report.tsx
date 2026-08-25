@@ -199,32 +199,34 @@ function ManagerCard({ profile, selected, expanded, onSelect }: { profile: Manag
 }
 
 /** The right-hand dossier for whichever manager is selected. */
-function Dossier({ profile }: { profile: ManagerProfile }) {
+function Dossier({ profile, showHeader = true }: { profile: ManagerProfile; showHeader?: boolean }) {
   const grouped = GROUPS.map((group) => ({ ...group, items: profile.insights.filter((insight) => insight.group === group.id) })).filter((group) => group.items.length > 0);
   const tend = profile.tendencies;
   const record = profile.record;
 
   return (
     <div className="flex flex-col gap-5">
-      <header className="flex flex-wrap items-center gap-3 border-b pb-4">
-        <LeverageMark muted={profile.isUser} score={profile.leverage} size="lg" />
-        <Avatar className="size-10">
-          <AvatarImage src={profile.avatar ? avatarUrl(profile.avatar) : undefined} alt="" />
-          <AvatarFallback>{initials(profile.manager)}</AvatarFallback>
-        </Avatar>
-        <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-2">
-            <h2 className="text-lg font-semibold tracking-tight">{profile.manager}</h2>
-            <Badge className={WINDOW_VARIANT[profile.window]} variant="outline">{profile.window}</Badge>
-            {tend.netPickFlow > 0 ? <Badge variant="outline">+{tend.netPickFlow} picks</Badge> : null}
-            {profile.isUser ? <Badge variant="secondary">You</Badge> : null}
+      {showHeader ? (
+        <header className="flex flex-wrap items-center gap-3 border-b pb-4">
+          <LeverageMark muted={profile.isUser} score={profile.leverage} size="lg" />
+          <Avatar className="size-10">
+            <AvatarImage src={profile.avatar ? avatarUrl(profile.avatar) : undefined} alt="" />
+            <AvatarFallback>{initials(profile.manager)}</AvatarFallback>
+          </Avatar>
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <h2 className="text-lg font-semibold tracking-tight">{profile.manager}</h2>
+              <Badge className={WINDOW_VARIANT[profile.window]} variant="outline">{profile.window}</Badge>
+              {tend.netPickFlow > 0 ? <Badge variant="outline">+{tend.netPickFlow} picks</Badge> : null}
+              {profile.isUser ? <Badge variant="secondary">You</Badge> : null}
+            </div>
+            <p className="mt-0.5 font-mono text-xs text-muted-foreground">
+              {record.wins}-{record.losses}{record.ties ? `-${record.ties}` : ""} · #{profile.valueRank} of {profile.teams} in value
+              {profile.career ? ` · ${profile.career.championships} title${profile.career.championships === 1 ? "" : "s"} in ${profile.career.seasons} seasons` : ""}
+            </p>
           </div>
-          <p className="mt-0.5 font-mono text-xs text-muted-foreground">
-            {record.wins}-{record.losses}{record.ties ? `-${record.ties}` : ""} · #{profile.valueRank} of {profile.teams} in value
-            {profile.career ? ` · ${profile.career.championships} title${profile.career.championships === 1 ? "" : "s"} in ${profile.career.seasons} seasons` : ""}
-          </p>
-        </div>
-      </header>
+        </header>
+      ) : null}
 
       {profile.play ? (
         <div className="flex items-start gap-3 rounded-lg border border-positive/30 bg-positive/5 p-3">
@@ -372,7 +374,7 @@ export function ScoutingReportView({ report }: { report: ScoutingReport }) {
                         />
                         {isExpanded ? (
                           <div className="rounded-b-xl border border-t-0 border-positive/50 bg-positive/5 p-3 lg:hidden">
-                            <Dossier profile={profile} />
+                            <Dossier profile={profile} showHeader={false} />
                           </div>
                         ) : null}
                       </div>

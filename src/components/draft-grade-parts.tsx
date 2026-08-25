@@ -29,7 +29,7 @@ export const valueTone = (value: number) => (value > 0 ? "text-positive" : value
 export function gradeTone(grade: string) {
   if (grade.startsWith("A")) return "border-transparent bg-positive/15 text-positive";
   if (grade.startsWith("B")) return "border-transparent bg-positive/10 text-positive";
-  if (grade.startsWith("C")) return "border-transparent bg-amber-500/15 text-amber-600 dark:text-amber-400";
+  if (grade.startsWith("C")) return "border-transparent bg-warning/15 text-warning";
   return "border-transparent bg-negative/15 text-negative";
 }
 

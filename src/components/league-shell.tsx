@@ -12,8 +12,8 @@ export function LeagueShell({ children, defaultOpen = true, league }: { children
     <SidebarProvider defaultOpen={defaultOpen}>
       <AppSidebar league={league} />
       <SidebarInset>
-        <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center gap-2 border-b border-border/60 bg-background/80 backdrop-blur-xl transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
-          <div className="flex w-full items-center gap-2 px-4">
+        <header className="sticky top-0 z-30 flex h-14 shrink-0 items-center md:h-16 gap-2 border-b border-border/60 bg-background/80 backdrop-blur-xl transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
+          <div className="flex w-full items-center gap-2 px-3 md:px-4">
             <SidebarTrigger className="-ml-1" />
             <Separator orientation="vertical" className="mr-2 data-vertical:h-4 data-vertical:self-auto" />
             <AppBreadcrumb league={league} />

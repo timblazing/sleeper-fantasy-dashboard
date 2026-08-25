@@ -12,12 +12,12 @@ const avatarUrl = (id: string) => `https://sleepercdn.com/avatars/thumbs/${id}`;
 const initials = (name: string) => name.split(/\s|&/).filter(Boolean).slice(0, 2).map((word) => word[0]).join("").toUpperCase();
 
 /** One tone ladder for the whole table: the tier chip, the rating bar, and the rank rail all read from it. */
-const TIER: Record<PowerTier, { label: string; chip: string; bar: string; rail: string }> = {
-  elite: { label: "Elite", chip: "border-transparent bg-emerald-500/12 text-emerald-600 dark:text-emerald-400", bar: "bg-emerald-500", rail: "bg-emerald-500" },
-  contender: { label: "Contender", chip: "border-transparent bg-sky-500/12 text-sky-600 dark:text-sky-400", bar: "bg-sky-500", rail: "bg-sky-500" },
-  middle: { label: "In the mix", chip: "border-transparent bg-muted text-muted-foreground", bar: "bg-muted-foreground/60", rail: "bg-muted-foreground/40" },
-  fading: { label: "Fading", chip: "border-transparent bg-amber-500/12 text-amber-600 dark:text-amber-500", bar: "bg-amber-500", rail: "bg-amber-500/70" },
-  bottom: { label: "Bottom tier", chip: "border-transparent bg-destructive/10 text-destructive", bar: "bg-destructive/60", rail: "bg-destructive/50" },
+const TIER: Record<PowerTier, { label: string; chip: string; rail: string }> = {
+  elite: { label: "Elite", chip: "border-transparent bg-positive/12 text-positive", rail: "bg-positive" },
+  contender: { label: "Contender", chip: "border-transparent bg-series-1/12 text-series-1", rail: "bg-series-1" },
+  middle: { label: "In the mix", chip: "border-transparent bg-muted text-muted-foreground", rail: "bg-muted-foreground/40" },
+  fading: { label: "Fading", chip: "border-transparent bg-warning/12 text-warning", rail: "bg-warning/70" },
+  bottom: { label: "Bottom tier", chip: "border-transparent bg-destructive/10 text-destructive", rail: "bg-destructive/50" },
 };
 
 /** Week-over-week movement. Flat is deliberately quiet so the eye lands on teams that actually moved. */
@@ -28,7 +28,7 @@ function Delta({ delta }: { delta: number | null }) {
   const up = delta > 0;
   const Icon = up ? ArrowUpRight : ArrowDownRight;
   return (
-    <span className={cn("inline-flex items-center gap-0.5 font-mono text-xs font-medium tabular-nums", up ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400")}>
+    <span className={cn("inline-flex items-center gap-0.5 font-mono text-xs font-medium tabular-nums", up ? "text-positive" : "text-negative")}>
       <Icon aria-hidden="true" className="size-3" />
       {Math.abs(delta)}
       <span className="sr-only">{up ? "up" : "down"} {Math.abs(delta)} places</span>
@@ -43,7 +43,7 @@ function FormDots({ results }: { results: boolean[] }) {
     <span className="inline-flex items-center gap-1">
       {results.map((won, index) => (
         <span
-          className={cn("size-1.5 rounded-full", won ? "bg-emerald-500" : "bg-muted-foreground/25", index === 0 && "ring-2 ring-offset-1 ring-offset-card", index === 0 && (won ? "ring-emerald-500/25" : "ring-muted-foreground/15"))}
+          className={cn("size-1.5 rounded-full", won ? "bg-positive" : "bg-muted-foreground/25", index === 0 && "ring-2 ring-offset-1 ring-offset-card", index === 0 && (won ? "ring-positive/25" : "ring-muted-foreground/15"))}
           key={index}
         >
           <span className="sr-only">{won ? "Win" : "Loss"}</span>
@@ -53,17 +53,6 @@ function FormDots({ results }: { results: boolean[] }) {
   );
 }
 
-/** The rating as a bar under the number: the gaps between teams matter more than the value itself. */
-function Rating({ row, max }: { row: PowerRow; max: number }) {
-  return (
-    <div className="flex flex-col items-end gap-1">
-      <span className="font-mono text-sm font-semibold tabular-nums">{row.rating.toFixed(1)}</span>
-      <span className="h-1 w-14 overflow-hidden rounded-full bg-muted">
-        <span className={cn("block h-full rounded-full", row.isUser ? "bg-primary" : TIER[row.tier].bar)} style={{ width: `${Math.max(4, (row.rating / max) * 100)}%` }} />
-      </span>
-    </div>
-  );
-}
 
 /**
  * The league ranked by the composite rating, one team per row.
@@ -73,8 +62,6 @@ function Rating({ row, max }: { row: PowerRow; max: number }) {
  * trending (form, luck). Narrow screens drop the trailing evidence columns first.
  */
 export function PowerRankingsTable({ rankings, leagueId, username }: { rankings: PowerRankings; leagueId: string; username?: string }) {
-  const max = Math.max(...rankings.rows.map((row) => row.rating), 1);
-
   return (
     <TooltipProvider>
       <Table>
@@ -82,7 +69,6 @@ export function PowerRankingsTable({ rankings, leagueId, username }: { rankings:
           <TableRow className="hover:bg-transparent">
             <TableHead className="h-auto w-14 py-2 pl-4">Rank</TableHead>
             <TableHead className="h-auto py-2">Team</TableHead>
-            <TableHead className="h-auto w-16 py-2 text-right">Rating</TableHead>
             <TableHead className="hidden h-auto w-24 py-2 sm:table-cell">Tier</TableHead>
             <TableHead className="hidden h-auto w-20 py-2 md:table-cell">W–L</TableHead>
             <TableHead className="hidden h-auto w-16 py-2 text-right lg:table-cell">PPG</TableHead>
@@ -118,10 +104,6 @@ export function PowerRankingsTable({ rankings, leagueId, username }: { rankings:
                     </p>
                   </div>
                 </div>
-              </TableCell>
-
-              <TableCell className="text-right">
-                <Rating max={max} row={row} />
               </TableCell>
 
               <TableCell className="hidden sm:table-cell">
@@ -172,7 +154,7 @@ function Luck({ row, started }: { row: PowerRow; started: boolean }) {
   return (
     <Tooltip>
       <TooltipTrigger className="cursor-default">
-        <span className={cn("font-mono text-xs font-medium tabular-nums", lucky ? "text-amber-600 dark:text-amber-500" : "text-sky-600 dark:text-sky-400")}>
+        <span className={cn("font-mono text-xs font-medium tabular-nums", lucky ? "text-warning" : "text-series-1")}>
           {lucky ? "+" : ""}{row.luck}
         </span>
       </TooltipTrigger>

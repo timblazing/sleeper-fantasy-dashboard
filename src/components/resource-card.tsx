@@ -16,12 +16,12 @@ const STATUS_LABEL: Record<ResourceStatus, string> = {
 // Status is advisory, so these lean on hue rather than the semantic tokens:
 // "paid" is not a destructive action and "integrated" is not a success state.
 const STATUS_CLASS: Record<ResourceStatus, string> = {
-  integrated: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300",
+  integrated: "bg-positive/15 text-positive",
   free: "bg-muted text-muted-foreground",
-  free_tier: "bg-blue-500/15 text-blue-700 dark:text-blue-300",
+  free_tier: "bg-series-1/15 text-series-1",
   paid: "bg-orange-500/15 text-orange-700 dark:text-orange-300",
   scrape_required: "bg-yellow-500/15 text-yellow-700 dark:text-yellow-300",
-  outdated: "bg-rose-500/15 text-rose-700 dark:text-rose-300",
+  outdated: "bg-negative/15 text-negative",
 };
 
 function hostOf(url: string): string {

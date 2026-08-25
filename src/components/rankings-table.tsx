@@ -18,7 +18,7 @@ const initials = (name: string) => name.split(/\s|&/).filter(Boolean).slice(0, 2
 function Trend({ value }: { value: number }) {
   if (!value) return null; // A zero trend is not a trend — render nothing rather than a 0.
   const Icon = value > 0 ? TrendingUp : TrendingDown;
-  return <span className={`inline-flex items-center gap-1 font-mono text-xs ${value > 0 ? "text-emerald-600 dark:text-emerald-400" : "text-destructive"}`}><Icon aria-hidden="true" className="size-3" />{value > 0 ? "+" : ""}{value.toLocaleString()}</span>;
+  return <span className={`inline-flex items-center gap-1 font-mono text-xs ${value > 0 ? "text-positive" : "text-destructive"}`}><Icon aria-hidden="true" className="size-3" />{value > 0 ? "+" : ""}{value.toLocaleString()}</span>;
 }
 
 function RankingsRowCells({ row, leagueId, username, maxValue }: { row: RankingsRow; leagueId: string; username?: string; maxValue: number }) {

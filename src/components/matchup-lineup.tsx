@@ -27,22 +27,22 @@ function PlayerSide({ entry, reverse, leagueId, username }: { entry: RosterSlot;
   const name = player?.name ?? "Empty";
 
   return (
-    <div className={cn("flex min-w-0 items-center gap-1.5 rounded-lg bg-muted/35 px-1 py-2.5 sm:gap-2 sm:px-2", reverse && "flex-row-reverse text-right")}>
-      <Avatar className="size-7 shrink-0 bg-muted sm:size-9">
+    <div className={cn("flex min-w-0 items-center gap-1.5 rounded-lg bg-muted/35 px-1.5 py-1.5 sm:gap-2 sm:px-2 sm:py-2", reverse && "flex-row-reverse text-right")}>
+      <Avatar className="size-6 shrink-0 bg-muted sm:size-8">
         {player ? <AvatarImage alt="" src={headshotUrl(player)} /> : null}
         <AvatarFallback className="text-[0.6rem]">{player?.position ?? "—"}</AvatarFallback>
       </Avatar>
       <div className="min-w-0 flex-1">
-        <p className="break-words text-[0.65rem] font-medium leading-tight sm:truncate sm:text-sm">
+        <p className="truncate text-xs font-medium leading-tight sm:text-sm">
           {href ? <Link className="hover:underline" href={href}>{name}</Link> : name}
         </p>
-        <p className="break-words text-[0.6rem] leading-tight text-muted-foreground sm:truncate sm:text-xs">
+        <p className="truncate text-[0.65rem] leading-tight text-muted-foreground sm:text-xs">
           {opponentLabel(entry)}
         </p>
       </div>
       <div className="shrink-0 font-mono text-right tabular-nums">
-        <p className="text-sm font-semibold">{points(entry)}</p>
-        <p aria-label={`Projected ${projection(entry)} points`} className="text-[0.6rem] text-muted-foreground">{projection(entry)}</p>
+        <p className="text-xs font-semibold leading-tight sm:text-sm">{points(entry)}</p>
+        <p aria-label={`Projected ${projection(entry)} points`} className="text-[0.6rem] leading-tight text-muted-foreground">{projection(entry)}</p>
       </div>
     </div>
   );
@@ -53,13 +53,13 @@ export function MatchupLineup({ matchup, leagueId, username }: { matchup: Matchu
   const rows = Math.max(matchup.home.slots.length, matchup.away.slots.length);
 
   return (
-    <div className="flex flex-col gap-1.5">
+    <div className="flex flex-col gap-1">
       {Array.from({ length: rows }, (_, index) => {
         const home = matchup.home.slots[index];
         const away = matchup.away.slots[index];
         const slot = home?.slot ?? away?.slot ?? null;
         return (
-          <div className="grid grid-cols-[minmax(0,1fr)_2.75rem_minmax(0,1fr)] items-center gap-1 sm:grid-cols-[minmax(0,1fr)_3.25rem_minmax(0,1fr)] sm:gap-2" key={`${home?.slot ?? "home"}-${away?.slot ?? "away"}-${index}`}>
+          <div className="grid grid-cols-[minmax(0,1fr)_2.5rem_minmax(0,1fr)] items-center gap-1 sm:grid-cols-[minmax(0,1fr)_3.25rem_minmax(0,1fr)] sm:gap-2" key={`${home?.slot ?? "home"}-${away?.slot ?? "away"}-${index}`}>
             {home ? <PlayerSide entry={home} leagueId={leagueId} username={username} /> : <span />}
             <span className="flex justify-center">
               <PositionBadge position={slot} label={slot ?? "—"} />

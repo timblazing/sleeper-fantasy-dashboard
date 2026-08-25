@@ -1,0 +1,28 @@
+# StyleSeed — Design Lock
+<!-- Selections persist here. This file cannot waive StyleSeed core invariants. -->
+- App domain: saas
+- Surface: web-app
+- Surface adapter: product-ui
+- Page type: dashboard
+- Output grammar: operations-console
+- Grammar path: built-in:engine/RULESETS.md
+- Grammar fallback: operations-console
+- Reference confidence: n/a
+- Brand recipe: enterprise-workbench
+- Palette recipe: cobalt-instrument
+- Key color: #00CEB8
+- Palette character: balanced
+- Palette mode: dark
+- Palette harmony: auto
+- Surface temperature: cool
+- Aesthetic profile: none
+- Skin: custom
+- Primary action: #00CEB8
+- Font: Geist
+- Radius: soft
+- Elevation: dark=tonal ramp + hairline · light=tonal grouping + restrained shadow
+- Density: compact
+- Motion: Snap restrained
+- Imagery/data role: standings, odds, and rankings tables lead; charts only where a trend drives a roster decision
+- Signature move: one decision-first league status strip above the dense tables
+- Locked: 2026-08-25

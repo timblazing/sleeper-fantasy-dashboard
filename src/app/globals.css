@@ -40,7 +40,7 @@
   --color-position-te-background: var(--position-te-background);
   --color-position-te-foreground: var(--position-te-foreground);
   --font-sans: var(--font-sans);
-  --font-mono: Geist Mono, monospace;
+  --font-mono: var(--font-mono);
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -84,6 +84,7 @@
   --color-series-8: var(--series-8);
   --color-positive: var(--positive);
   --color-negative: var(--negative);
+  --color-warning: var(--warning);
   --color-destructive-foreground: var(--destructive-foreground);
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
@@ -92,70 +93,76 @@
 }
 
 /* ---------------------------------------------------------------------------
- * Palette: zinc neutrals with a teal brand accent, matching the
- * Fantasy Hub visual language. Values are the Tailwind v4 oklch definitions
- * for the named shades, so utility classes like `text-teal-500` sit exactly
- * on top of the semantic tokens instead of drifting a shade away.
+ * Palette: StyleSeed-generated from key #00CEB8 (Sleeper teal), dark-first,
+ * balanced character, cool surfaces. Source of truth is `.styleseed/palette.json`
+ * — the roles there are mapped onto shadcn's token names below so components
+ * keep consuming `bg-card` / `text-muted-foreground` and inherit the system.
+ *
+ * Grammar: operations-console. Cool near-neutrals carry 90% of the surface;
+ * teal is reserved for the primary action and selected state, violet for
+ * secondary categorization. Never a second primary action.
  * ------------------------------------------------------------------------- */
 :root {
-  --radius: 0.625rem;
+  --radius: 0.5rem;
 
-  /* zinc-50 / zinc-900 */
+  /* Light is the derived twin of the dark ground: same teal hue, inverted
+     lightness ramp, cool-tinted neutrals so the two themes read as one system. */
 
-  /* Cards lift off the zinc-50 page with plain white. */
+  /* Cards lift off the cool page ground with plain white. */
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
+  --card-foreground: oklch(0.18 0.008 240);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
+  --popover-foreground: oklch(0.18 0.008 240);
 
-  /* teal-500 on near-black — the brand fill, and readable at button sizes. */
-  --primary: oklch(0.852 0.199 91.936);
-  --primary-foreground: oklch(0.421 0.095 57.708);
+  /* The brand teal, darkened until it carries white text at button sizes. */
+  --primary: oklch(0.58 0.106 181.5);
+  --primary-foreground: oklch(1 0 0);
 
-  /* zinc-100 / zinc-900 */
-  --secondary: oklch(0.967 0.001 286.375);
-  --secondary-foreground: oklch(0.21 0.006 285.885);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
+  --secondary: oklch(0.965 0.004 240);
+  --secondary-foreground: oklch(0.24 0.008 240);
+  --muted: oklch(0.965 0.004 240);
+  --muted-foreground: oklch(0.5 0.011 240);
+  --accent: oklch(0.965 0.004 240);
+  --accent-foreground: oklch(0.24 0.008 240);
 
-  /* rose-600 */
-  --destructive: oklch(0.577 0.245 27.325);
+  --destructive: oklch(0.55 0.208 27.5);
 
-  /* zinc-200, with a teal focus ring. */
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
+  --border: oklch(0.915 0.006 240);
+  --input: oklch(0.915 0.006 240);
+  /* Focus is its own role — a blue distinct from the teal primary, so a focused
+     primary button still shows a visible ring. */
+  --ring: oklch(0.6 0.13 250);
 
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.681 0.162 75.834);
-  --sidebar-primary-foreground: oklch(0.987 0.026 102.212);
-  /* Active and hovered nav items pick up the brand tint (teal-50/teal-800). */
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --sidebar: oklch(0.981 0.004 240);
+  --sidebar-foreground: oklch(0.18 0.008 240);
+  --sidebar-primary: oklch(0.58 0.106 181.5);
+  --sidebar-primary-foreground: oklch(1 0 0);
+  /* Active and hovered nav items pick up the brand tint. */
+  --sidebar-accent: oklch(0.955 0.018 181.5);
+  --sidebar-accent-foreground: oklch(0.42 0.083 181.5);
+  --sidebar-border: oklch(0.915 0.006 240);
+  --sidebar-ring: oklch(0.6 0.13 250);
 
-  /* RosterAudit-style position chips: QB red, RB green, WR cyan, TE amber. */
-  --position-qb-background: oklch(0.971 0.013 17.38);
-  --position-qb-foreground: oklch(0.505 0.213 27.518);
-  --position-rb-background: oklch(0.982 0.018 155.826);
-  --position-rb-foreground: oklch(0.448 0.119 151.328);
-  --position-wr-background: oklch(0.984 0.019 200.873);
-  --position-wr-foreground: oklch(0.45 0.085 224.283);
-  --position-te-background: oklch(0.987 0.022 95.277);
-  --position-te-foreground: oklch(0.473 0.137 46.201);
+  /* Position chips: QB red, RB green, WR blue, TE amber. These are a stable
+     categorical set, not decoration — WR is blue rather than cyan so no chip
+     collides with the teal primary action. */
+  --position-qb-background: oklch(0.958 0.022 20);
+  --position-qb-foreground: oklch(0.505 0.213 27.5);
+  --position-rb-background: oklch(0.955 0.03 155);
+  --position-rb-foreground: oklch(0.448 0.119 151);
+  --position-wr-background: oklch(0.955 0.028 250);
+  --position-wr-foreground: oklch(0.47 0.148 254);
+  --position-te-background: oklch(0.962 0.04 90);
+  --position-te-foreground: oklch(0.473 0.137 46);
 
-  --font-sans: Geist, sans-serif;
-  --font-mono: Geist Mono, monospace;
   --destructive-foreground: oklch(1 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
+  /* Single-series ramp: neutral by design, so one line never competes with the
+     teal primary. Multi-series work uses `--series-*` below. */
+  --chart-1: oklch(0.58 0.106 181.5);
+  --chart-2: oklch(0.68 0.075 181.5);
+  --chart-3: oklch(0.56 0.011 240);
+  --chart-4: oklch(0.44 0.010 240);
+  --chart-5: oklch(0.30 0.009 240);
   --font-serif: Georgia, serif;
   --shadow-color: hsl(0 0% 0%);
   --shadow-opacity: 0.18;
@@ -174,8 +181,10 @@
   --shadow-xl: 0px 1px 2px 0px hsl(0 0% 0% / 0.18), 0px 8px 10px -1px hsl(0 0% 0% / 0.18);
   --shadow-2xl: 0px 1px 2px 0px hsl(0 0% 0% / 0.45);
   --tracking-normal: 0em;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
+  /* Page ground sits a step below the cards so panels read as layers, not
+     floating boxes — the workbench's tonal separation instead of shadow. */
+  --background: oklch(0.976 0.004 240);
+  --foreground: oklch(0.18 0.008 240);
 
   /* ---------------------------------------------------------------------
    * Categorical series ramp.
@@ -191,71 +200,73 @@
   --series-3: oklch(0.64 0.19 25);   /* red */
   --series-4: oklch(0.66 0.16 300);  /* purple */
   --series-5: oklch(0.68 0.15 70);   /* amber */
-  --series-6: oklch(0.62 0.11 200);  /* cyan */
+  --series-6: oklch(0.58 0.10 220);  /* steel — pulled off cyan so no series reads as the teal primary */
   --series-7: oklch(0.64 0.17 350);  /* pink */
   --series-8: oklch(0.60 0.12 130);  /* lime */
 
   /* Result semantics, so "good/bad" stops being hardcoded emerald-600. */
-  --positive: oklch(0.596 0.145 163.225);
-  --negative: oklch(0.577 0.245 27.325);
+  --positive: oklch(0.52 0.122 158);
+  --negative: oklch(0.55 0.208 27.5);
+  --warning: oklch(0.52 0.115 65);
 }
 
+/* Dark is the designed default: the generated roles land here verbatim.
+   background #020407 · surface #0A0D0F · chrome #131A21 · border #303942 */
 .dark {
-  /* zinc-950 / zinc-50, with zinc-900 cards lifting off it. */
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
+  --background: oklch(0.145 0.008 240);
+  --foreground: oklch(0.955 0.003 240);
+  /* The card is the generated `surface` role, one tonal step up from the ground. */
+  --card: oklch(0.199 0.009 240);
+  --card-foreground: oklch(0.955 0.003 240);
+  --popover: oklch(0.199 0.009 240);
+  --popover-foreground: oklch(0.955 0.003 240);
 
-  /* The brand fill is the same teal in both themes — it reads on either. */
-  --primary: oklch(0.795 0.184 86.047);
-  --primary-foreground: oklch(0.421 0.095 57.708);
+  /* primary #23C8B3 — 9.81:1 against its near-black foreground. */
+  --primary: oklch(0.746 0.13 181.5);
+  --primary-foreground: oklch(0.145 0.008 240);
 
-  /* zinc-800 / zinc-400 */
-  --secondary: oklch(0.274 0.006 286.033);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
+  /* The generated `chrome` role: toolbars, secondary controls, table headers. */
+  --secondary: oklch(0.262 0.011 240);
+  --secondary-foreground: oklch(0.955 0.003 240);
+  --muted: oklch(0.262 0.011 240);
+  --muted-foreground: oklch(0.71 0.008 240);
+  --accent: oklch(0.262 0.011 240);
+  --accent-foreground: oklch(0.955 0.003 240);
 
-  /* rose-400 */
-  --destructive: oklch(0.704 0.191 22.216);
+  /* danger #FF968A */
+  --destructive: oklch(0.735 0.135 27.5);
 
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
+  --border: oklch(0.32 0.012 240);
+  --input: oklch(0.36 0.013 240);
+  /* focus #95C9FF — blue, distinct from the teal primary. */
+  --ring: oklch(0.79 0.098 250);
 
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.795 0.184 86.047);
-  --sidebar-primary-foreground: oklch(0.987 0.026 102.212);
-  /* teal-950/45 with teal-200 text — the dark-mode twin of the light tint. */
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --sidebar: oklch(0.175 0.009 240);
+  --sidebar-foreground: oklch(0.955 0.003 240);
+  --sidebar-primary: oklch(0.746 0.13 181.5);
+  --sidebar-primary-foreground: oklch(0.145 0.008 240);
+  /* Deep teal wash with a light teal label — the dark twin of the light tint. */
+  --sidebar-accent: oklch(0.3 0.045 181.5);
+  --sidebar-accent-foreground: oklch(0.87 0.09 181.5);
+  --sidebar-border: oklch(0.32 0.012 240);
+  --sidebar-ring: oklch(0.79 0.098 250);
 
-  --position-qb-background: oklch(0.258 0.092 26.042 / 55%);
-  --position-qb-foreground: oklch(0.704 0.191 22.216);
-  --position-rb-background: oklch(0.266 0.065 152.934 / 55%);
-  --position-rb-foreground: oklch(0.792 0.209 151.711);
-  --position-wr-background: oklch(0.302 0.056 229.695 / 55%);
-  --position-wr-foreground: oklch(0.865 0.127 207.078);
-  --position-te-background: oklch(0.279 0.077 45.635 / 55%);
-  --position-te-foreground: oklch(0.828 0.189 84.429);
-  --destructive-foreground: oklch(0 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
+  --position-qb-background: oklch(0.3 0.075 20 / 55%);
+  --position-qb-foreground: oklch(0.76 0.145 22);
+  --position-rb-background: oklch(0.3 0.06 155 / 55%);
+  --position-rb-foreground: oklch(0.79 0.135 151);
+  --position-wr-background: oklch(0.3 0.065 250 / 55%);
+  --position-wr-foreground: oklch(0.77 0.115 254);
+  --position-te-background: oklch(0.3 0.06 90 / 55%);
+  --position-te-foreground: oklch(0.82 0.13 84);
+  --destructive-foreground: oklch(0.145 0.008 240);
+  --chart-1: oklch(0.746 0.13 181.5);
+  --chart-2: oklch(0.6 0.095 181.5);
+  --chart-3: oklch(0.72 0.008 240);
+  --chart-4: oklch(0.54 0.011 240);
+  --chart-5: oklch(0.38 0.012 240);
   --radius: 0.5rem;
-  --font-sans: Geist, sans-serif;
   --font-serif: Georgia, serif;
-  --font-mono: Geist Mono, monospace;
   --shadow-color: hsl(0 0% 0%);
   --shadow-opacity: 0.18;
   --shadow-blur: 2px;
@@ -279,12 +290,14 @@
   --series-3: oklch(0.70 0.18 25);
   --series-4: oklch(0.73 0.15 300);
   --series-5: oklch(0.78 0.15 70);
-  --series-6: oklch(0.72 0.11 200);
+  --series-6: oklch(0.68 0.10 220);
   --series-7: oklch(0.72 0.16 350);
   --series-8: oklch(0.72 0.13 130);
 
-  --positive: oklch(0.765 0.177 163.223);
-  --negative: oklch(0.704 0.191 22.216);
+  /* success #73D083 · warning #E1AD57 · danger #FF968A */
+  --positive: oklch(0.79 0.135 145);
+  --negative: oklch(0.735 0.135 27.5);
+  --warning: oklch(0.775 0.115 75);
 }
 
 @layer base {

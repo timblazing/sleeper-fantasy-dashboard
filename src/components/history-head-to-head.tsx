@@ -54,7 +54,7 @@ export function HistoryHeadToHead({ headToHead, managers }: { headToHead: Map<st
                       <td
                         className={cn(
                           "border-t px-1 py-1.5 text-center align-middle font-mono text-xs tabular-nums",
-                          winning && "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
+                          winning && "bg-positive/10 text-positive",
                           losing && "bg-destructive/10 text-destructive",
                           !winning && !losing && "text-muted-foreground",
                         )}

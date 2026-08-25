@@ -7,8 +7,8 @@ import type { OverviewData, PositionScarcity, RecommendedAction, Tone } from "@/
 import { cn } from "@/lib/utils";
 
 const TONE_CHIP: Record<Tone, string> = {
-  positive: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
-  warning: "bg-amber-500/10 text-amber-600 dark:text-amber-500",
+  positive: "bg-positive/10 text-positive",
+  warning: "bg-warning/10 text-warning",
   critical: "bg-destructive/10 text-destructive",
   neutral: "bg-muted text-muted-foreground",
 };
@@ -32,6 +32,13 @@ function ActionRow({ action }: { action: RecommendedAction }) {
       <div className="min-w-0 flex-1">
         <p className="font-medium">{action.title}</p>
         <p className="mt-0.5 text-sm leading-relaxed text-muted-foreground">{action.detail}</p>
+        {/* Below sm the CTA drops out of the row and sits under the detail, rather than
+            disappearing and leaving the recommendation with no way to act on it. */}
+        {action.href && action.cta ? (
+          <Link className={cn(buttonVariants({ variant: "outline", size: "sm" }), "mt-2 sm:hidden")} href={action.href}>
+            {action.cta}<ArrowRight data-icon="inline-end" aria-hidden="true" />
+          </Link>
+        ) : null}
       </div>
       {action.href && action.cta ? (
         <Link className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "shrink-0 max-sm:hidden")} href={action.href}>
@@ -55,7 +62,7 @@ function ScarcityColumn({ scarcity }: { scarcity: PositionScarcity }) {
       </div>
       <div className="flex flex-col gap-2.5">
         {scarcity.rows.map((row, index) => (
-          <div className="grid grid-cols-[1rem_minmax(0,1fr)_minmax(2rem,4rem)_2.5rem] items-center gap-1.5 text-xs" key={row.rosterId}>
+          <div className="grid grid-cols-[0.75rem_minmax(0,1fr)_minmax(1.5rem,3.5rem)_2.25rem] items-center gap-1.5 text-xs sm:grid-cols-[1rem_minmax(0,1fr)_minmax(2rem,4rem)_2.5rem]" key={row.rosterId}>
             <span className="text-center font-mono text-[0.65rem] text-muted-foreground">{index + 1}</span>
             <span className={cn("truncate", row.isUser ? "font-semibold text-primary" : "text-muted-foreground")}>{row.manager}</span>
             <span className="h-1.5 overflow-hidden rounded-full bg-muted" aria-hidden="true">
@@ -78,7 +85,7 @@ export function PositionalScarcityCard({ data }: { data: OverviewData }) {
         <CardTitle>Positional scarcity</CardTitle>
         <CardDescription>Who controls each position</CardDescription>
       </CardHeader>
-      <CardContent className="grid gap-x-8 gap-y-8 md:grid-cols-2 lg:grid-cols-4">
+      <CardContent className="grid gap-x-8 gap-y-8 sm:grid-cols-2 xl:grid-cols-4">
         {data.positionScarcity.map((scarcity) => <ScarcityColumn key={scarcity.position} scarcity={scarcity} />)}
       </CardContent>
     </Card>

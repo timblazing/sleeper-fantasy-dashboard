@@ -11,8 +11,8 @@ import { cn } from "@/lib/utils";
  * two rosters swapped. Waiver claims and free agent adds share the plus — both are an arrival.
  */
 const ENTRY_STYLE = {
-  add: { icon: PlusIcon, chip: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" },
-  drop: { icon: MinusIcon, chip: "bg-rose-500/10 text-rose-600 dark:text-rose-400" },
+  add: { icon: PlusIcon, chip: "bg-positive/10 text-positive" },
+  drop: { icon: MinusIcon, chip: "bg-negative/10 text-negative" },
   trade: { icon: ArrowLeftRightIcon, chip: "bg-primary/10 text-primary" },
 } as const;
 
@@ -25,7 +25,7 @@ function PlayerMove({ kind, player }: { kind: "add" | "drop"; player: NflPlayer 
         <AvatarFallback className="text-[0.6rem]">{player.position ?? "NFL"}</AvatarFallback>
       </Avatar>
       <div className="min-w-0 flex-1">
-        <p className={cn("flex items-center gap-1 text-[0.65rem] font-medium uppercase tracking-wide", kind === "add" ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400")}>
+        <p className={cn("flex items-center gap-1 text-[0.65rem] font-medium uppercase tracking-wide", kind === "add" ? "text-positive" : "text-negative")}>
           <Icon className="size-3" aria-hidden="true" />{kind}
         </p>
         <p className="truncate text-sm font-semibold">{player.name}</p>

@@ -8,7 +8,7 @@ const score = (value: number | null) => value == null ? "—" : value.toFixed(1)
 // Favored/underdog read at a glance. An exact 50 is a true coin flip, so it stays neutral rather
 // than picking a side.
 const probabilityTone = (probability: number | null) =>
-  probability == null || probability === 50 ? "bg-muted-foreground/50" : probability > 50 ? "bg-emerald-500" : "bg-destructive";
+  probability == null || probability === 50 ? "bg-muted-foreground/50" : probability > 50 ? "bg-positive" : "bg-destructive";
 const liveScore = (side: MatchupSide) => side.slots.some((entry) => entry.game?.state === "in" || entry.game?.state === "post") ? side.score.toFixed(1) : "-";
 
 function TeamAvatar({ side }: { side: MatchupSide }) {
@@ -22,18 +22,18 @@ function TeamAvatar({ side }: { side: MatchupSide }) {
 
 function CompactTeam({ probability, reverse, side, leagueId, username }: { probability: number | null; reverse?: boolean; side: MatchupSide; leagueId?: string; username?: string }) {
   return (
-    <div className={cn("flex min-w-0 flex-1 items-center gap-3", reverse && "flex-row-reverse text-right")}>
+    <div className={cn("flex min-w-0 flex-1 items-center gap-2 sm:gap-3", reverse && "flex-row-reverse text-right")}>
       <TeamAvatar side={side} />
       <div className="min-w-0 flex-1">
-        <p className="break-all text-[0.625rem] leading-tight text-muted-foreground sm:truncate sm:text-xs">@{side.team.manager}</p>
+        <p className="truncate text-[0.65rem] leading-tight text-muted-foreground sm:text-xs">@{side.team.manager}</p>
         {leagueId ? (
-          <Link className="mt-0.5 block break-words text-xs font-semibold leading-tight hover:underline focus-visible:rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:truncate sm:text-base" href={withUsername(`/${leagueId}/teams/${side.team.rosterId}`, username)}>
+          <Link className="mt-0.5 block truncate text-xs font-semibold leading-tight hover:underline focus-visible:rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:text-base" href={withUsername(`/${leagueId}/teams/${side.team.rosterId}`, username)}>
             {side.team.name}
           </Link>
         ) : (
-          <p className="mt-0.5 break-words text-xs font-semibold leading-tight sm:truncate sm:text-base">{side.team.name}</p>
+          <p className="mt-0.5 truncate text-xs font-semibold leading-tight sm:text-base">{side.team.name}</p>
         )}
-        <div className={cn("mt-2 flex items-center gap-2", reverse && "flex-row-reverse")}>
+        <div className={cn("mt-1.5 flex items-center gap-1.5 sm:mt-2 sm:gap-2", reverse && "flex-row-reverse")}>
           <div className="h-1 flex-1 overflow-hidden rounded-full bg-muted">
             <div className={cn("h-full rounded-full", probabilityTone(probability))} style={{ width: `${probability ?? 50}%` }} />
           </div>

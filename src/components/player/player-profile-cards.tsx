@@ -7,8 +7,8 @@ import { cn } from "@/lib/utils";
 /** Severity → text colour. Amber has no semantic token, so it uses the Tailwind pair directly. */
 const RISK_TONE: Record<string, string> = {
   low: "text-positive",
-  moderate: "text-amber-600 dark:text-amber-500",
-  medium: "text-amber-600 dark:text-amber-500",
+  moderate: "text-warning",
+  medium: "text-warning",
   high: "text-negative",
   extreme: "text-negative",
 };

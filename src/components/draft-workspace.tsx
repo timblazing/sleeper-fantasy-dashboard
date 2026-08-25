@@ -102,7 +102,7 @@ function ManagerTable({ data, onSelect }: { data: DraftGradeData; onSelect: (ros
                   </div>
                 </TableCell>
                 <TableCell className="text-right tabular-nums">{manager.picks.length}</TableCell>
-                <TableCell className={cn("hidden text-right tabular-nums sm:table-cell", manager.hitRate >= 50 ? "text-positive" : manager.hitRate > 0 ? "text-amber-600 dark:text-amber-400" : "text-negative")}>{manager.hitRate}%</TableCell>
+                <TableCell className={cn("hidden text-right tabular-nums sm:table-cell", manager.hitRate >= 50 ? "text-positive" : manager.hitRate > 0 ? "text-warning" : "text-negative")}>{manager.hitRate}%</TableCell>
                 <TableCell className="hidden md:table-cell"><SurplusBar surplus={manager.surplusPerPick} scale={scale} /></TableCell>
                 <TableCell className={cn("text-right font-medium tabular-nums max-sm:hidden", valueTone(manager.surplus))}>{signed(manager.surplus)}</TableCell>
                 <TableCell className="text-right"><GradeBadge grade={manager.grade} /></TableCell>
@@ -465,7 +465,7 @@ export function DraftWorkspace({ data, basePath }: { data: DraftGradeData; baseP
   return (
     <div className="flex flex-col gap-6">
       {!data.curveBacked ? (
-        <Card className="border-amber-500/40 bg-amber-500/5 py-3">
+        <Card className="ring-warning/40 bg-warning/5 py-3">
           <CardContent className="px-4 text-xs text-muted-foreground">
             RosterAudit&apos;s slot values are unavailable, so picks are benchmarked against the rest of their own class instead. Grades will shift once the curve returns.
           </CardContent>

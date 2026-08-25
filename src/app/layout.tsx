@@ -1,13 +1,14 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Inter } from "next/font/google";
+import { Geist, Geist_Mono } from "next/font/google";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 
-const inter = Inter({subsets:['latin'],variable:'--font-sans'});
-
-const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
-const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
+// Geist is the sans everywhere and Geist Mono carries every number, so both are bound to
+// the tokens the palette already reads (`--font-sans` / `--font-mono`) rather than to
+// framework-generated variable names nothing references.
+const geistSans = Geist({ subsets: ["latin"], variable: "--font-sans" });
+const geistMono = Geist_Mono({ subsets: ["latin"], variable: "--font-mono" });
 
 // No `template`: tab titles stay the bare page name ("Dashboard", "Players"). The league is
 // already named in the sidebar and the favicon, so repeating it in every tab only crowds them.
@@ -15,7 +16,7 @@ export const metadata: Metadata = { title: { default: "Sleeper Fantasy Dashboard
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className={cn("dark", geistSans.variable, geistMono.variable, "font-sans", inter.variable)} style={{ colorScheme: "dark" }}>
+    <html lang="en" className={cn("dark", geistSans.variable, geistMono.variable, "font-sans")} style={{ colorScheme: "dark" }}>
       <body>
         <TooltipProvider>{children}</TooltipProvider>
       </body>

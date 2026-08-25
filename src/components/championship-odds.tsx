@@ -8,37 +8,26 @@ import type { ChampionshipOddsRow, ChampionshipOddsSeason } from "@/lib/team-ins
 import { cn } from "@/lib/utils";
 
 const TIER_BAR: Record<ChampionshipOddsRow["tier"], string> = {
-  contention: "bg-amber-500",
+  contention: "bg-warning",
   fringe: "bg-muted-foreground/55",
   out: "bg-muted-foreground/25",
 };
 
 function OddsRow({ maxOdds, nextTier, rank, row }: { maxOdds: number; nextTier?: ChampionshipOddsRow["tier"]; rank: number; row: ChampionshipOddsRow }) {
   const barWidth = Math.max(2, (row.odds / maxOdds) * 100);
-  const labelInside = barWidth >= 12;
 
   return (
     <li className={cn(
       "grid grid-cols-[1.25rem_minmax(4.75rem,7.5rem)_minmax(4rem,1fr)_3.25rem] items-center gap-x-2 border-b border-transparent py-1.5 text-xs last:border-b-0 sm:grid-cols-[1.25rem_minmax(7rem,10rem)_minmax(8rem,1fr)_3.5rem]",
-      row.tier === "contention" && nextTier !== row.tier && "border-b-amber-500/25 pb-2",
+      row.tier === "contention" && nextTier !== row.tier && "border-b-warning/25 pb-2",
       row.tier === "fringe" && nextTier !== row.tier && "border-b-border border-dashed pb-2",
     )}>
-      <span className={cn("text-center font-mono tabular-nums", row.tier === "contention" ? "text-amber-500" : "text-muted-foreground")}>{rank}</span>
+      <span className={cn("text-center font-mono tabular-nums", row.tier === "contention" ? "text-warning" : "text-muted-foreground")}>{rank}</span>
       <span className={cn("truncate", row.isUser ? "font-semibold text-primary" : "text-foreground")}>{row.manager}</span>
       <span className="relative h-5 overflow-hidden rounded bg-muted/35">
         <span className={cn("block h-full min-w-1 rounded", row.isUser ? "bg-primary" : TIER_BAR[row.tier])} style={{ width: `${barWidth}%` }} />
-        <span
-          className={cn(
-            "absolute top-1/2 z-10 font-mono text-[0.625rem] font-medium tabular-nums",
-            labelInside ? "pr-2 text-white" : "text-muted-foreground",
-          )}
-          style={{ left: `${barWidth}%`, transform: labelInside ? "translate(-100%, -50%)" : "translate(0.5rem, -50%)" }}
-        >{row.odds.toFixed(1)}%</span>
       </span>
-      <span className="text-right font-mono tabular-nums">
-        <span className="block text-[0.6875rem] font-medium">{row.ppg.toFixed(1)}</span>
-        <span className="block text-[0.5rem] uppercase tracking-wide text-muted-foreground">PPG</span>
-      </span>
+      <span className="text-right font-mono text-[0.6875rem] font-medium tabular-nums">{row.odds.toFixed(1)}%</span>
     </li>
   );
 }
@@ -77,7 +66,7 @@ export function ChampionshipOdds({ seasons }: { seasons: ChampionshipOddsSeason[
           {active.rows.map((row, index) => <OddsRow key={row.rosterId} maxOdds={maxOdds} nextTier={active.rows[index + 1]?.tier} rank={index + 1} row={row} />)}
         </ol>
         <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-[0.625rem] text-muted-foreground" aria-label="Odds tiers">
-          <span className="flex items-center gap-1.5"><span className="h-0.5 w-3 bg-amber-500" aria-hidden="true" />Contention</span>
+          <span className="flex items-center gap-1.5"><span className="h-0.5 w-3 bg-warning" aria-hidden="true" />Contention</span>
           <span className="flex items-center gap-1.5"><span className="h-0.5 w-3 bg-muted-foreground/55" aria-hidden="true" />Fringe</span>
           <span className="flex items-center gap-1.5"><span className="h-0.5 w-3 bg-muted-foreground/25" aria-hidden="true" />Out</span>
         </div>
