@@ -69,11 +69,6 @@ export const rankingsHref = (leagueId: string, query: RankingsQuery, overrides: 
 
 export const hasActiveRankingsFilters = (query: RankingsQuery) => Boolean(query.search || query.minAge !== undefined || query.maxAge !== undefined || query.position !== "all" || query.sort !== "value");
 
-/** What the "Filters" button badges. Only the controls that live *inside* the popover
- *  count — position and search have their own always-visible affordances, so counting
- *  them would badge a button whose contents the reader can already see. */
-export const rankingsFilterCount = (query: RankingsQuery) => (query.minAge !== undefined || query.maxAge !== undefined ? 1 : 0);
-
 /** "22–30", "22+", "up to 30" — the age range as a chip label, or null when unset. */
 export const describeAgeRange = (query: RankingsQuery): string | null => {
   if (query.minAge !== undefined && query.maxAge !== undefined) return `${query.minAge}–${query.maxAge}`;

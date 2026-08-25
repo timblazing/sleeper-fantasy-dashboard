@@ -11,8 +11,6 @@ const ESPN_TO_SLEEPER: Record<string, string> = { WSH: "WAS" };
 
 export const toEspnTeam = (team: string) => SLEEPER_TO_ESPN[team] ?? team;
 export const toSleeperTeam = (team: string) => ESPN_TO_SLEEPER[team] ?? team;
-export const teamLogoUrl = (team: string) => `https://a.espncdn.com/i/teamlogos/nfl/500/${toEspnTeam(team).toLowerCase()}.png`;
-export const headshotUrlForEspnId = (espnId: number) => `https://a.espncdn.com/i/headshots/nfl/players/full/${espnId}.png`;
 
 type ScoreboardResponse = {
   events: {

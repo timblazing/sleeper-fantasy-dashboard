@@ -18,11 +18,6 @@ export type Severity = (typeof SEVERITIES)[number];
 
 /** How each tier reads in the UI: the chip label, and the one-line explanation under it. */
 export const SEVERITY_LABELS: Record<Severity, string> = { out: "Out", risk: "In doubt", watch: "Watch" };
-export const SEVERITY_HINTS: Record<Severity, string> = {
-  out: "Ruled out, suspended, or on IR/PUP",
-  risk: "Questionable or doubtful for this week",
-  watch: "Carrying an injury or practice note, no game designation",
-};
 
 export const INJURY_POSITIONS = ["all", "QB", "RB", "WR", "TE"] as const;
 export const INJURY_SORTS = ["severity", "value", "name", "team"] as const;

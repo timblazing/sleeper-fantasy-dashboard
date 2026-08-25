@@ -2,7 +2,6 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
 import { ArrowLeftRightIcon, ChevronRightIcon, TrendingDownIcon, TrendingUpIcon } from "lucide-react";
 import { GradeBadge, ManagerAvatar, PlayerHeadshot, SortHeader, SurplusBar, plain, signed, valueTone } from "@/components/draft-grade-parts";
 import { PositionBadge } from "@/components/position-badge";
@@ -14,7 +13,6 @@ import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from "@/components/u
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { useAccount } from "@/hooks/use-account";
 import type { DraftGradeData, DraftManagerGrade, DraftPickGrade } from "@/lib/draft-grades";
 import { cn } from "@/lib/utils";
 
@@ -438,22 +436,8 @@ function CareerTable({ data }: { data: DraftGradeData }) {
   );
 }
 
-/** True only after hydration, so client-only defaults never diverge from the server's HTML. */
-function useMounted() {
-  return React.useSyncExternalStore(() => () => {}, () => true, () => false);
-}
-
 export function DraftWorkspace({ data, basePath }: { data: DraftGradeData; basePath: string }) {
   const [view, setView] = React.useState("grades");
-  // The viewer's own team opens by default, so the page answers "how did I draft?" without a click.
-  // `useAccount` resolves `?username=` on the client, so until it lands there is nothing to open.
-  const username = useSearchParams().get("username")?.trim() || undefined;
-  const account = useAccount(username);
-  const ownRosterId = account ? data.managers.find((manager) => manager.ownerId === account.userId)?.rosterId : undefined;
-  // `useAccount` reads a module cache the sidebar may have already warmed, so the viewer's roster
-  // can be known on the client's first render but never on the server. Gating on `mounted` keeps
-  // that first render identical to the SSR output instead of tripping hydration.
-  const mounted = useMounted();
   const [selectedRosterId, setSelectedRosterId] = React.useState<number | null>(null);
   const selected = data.managers.find((manager) => manager.rosterId === selectedRosterId) ?? null;
 

@@ -1,6 +1,6 @@
 import "server-only";
 import { createMemo } from "@/lib/memo";
-import type { NflPlayer, TrendingPlayer } from "@/lib/types";
+import type { NflPlayer } from "@/lib/types";
 
 const API = "https://api.sleeper.app/v1";
 // Sleeper asks that the full player map be fetched no more than once per day. It is ~15MB of JSON,
@@ -69,12 +69,3 @@ export function resolvePlayer(catalog: Map<string, NflPlayer>, id: string): NflP
   return catalog.get(id) ?? (isDefenseId(id) ? defensePlayer(id) : { id, name: `Player ${id}`, position: null, team: null, age: null, yearsExp: null, injuryStatus: null, injuryBodyPart: null, practiceParticipation: null, number: null, espnId: null, searchRank: null, depthChartOrder: null, status: null });
 }
 
-export async function getTrendingPlayers(type: "add" | "drop", limit = 25): Promise<TrendingPlayer[]> {
-  const [catalog, response] = await Promise.all([
-    getPlayerCatalog(),
-    fetch(`${API}/players/nfl/trending/${type}?lookback_hours=24&limit=${limit}`, { headers: { "User-Agent": "Sleeper Fantasy Dashboard/0.1" }, next: { revalidate: 900 } }),
-  ]);
-  if (!response.ok) return [];
-  const rows = (await response.json()) as { player_id: string; count: number }[];
-  return rows.map((row) => ({ player: resolvePlayer(catalog, row.player_id), count: row.count }));
-}
