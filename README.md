@@ -1,4 +1,22 @@
-![Sleeper Fantasy Dashboard](https://shieldcn.dev/header/surface.svg?title=Sleeper+Fantasy+Dashboard&subtitle=Tools+and+insights+for+Sleeper+Dynasty+leagues&mode=dark)
+<p align="center">
+  <img alt="Sleeper Fantasy Dashboard" src="https://shieldcn.dev/header/surface.svg?title=Sleeper+Fantasy+Dashboard&amp;subtitle=Tools+and+insights+for+Sleeper+Dynasty+leagues&amp;mode=dark&amp;image=https%3A%2F%2Fi.imgur.com%2FGl1TnAp.png&amp;overlay=.8" />
+</p>
+
+<p align="center">
+  <a href="https://raw.githubusercontent.com/timblazing/sleeper-fantasy-dashboard/refs/heads/main/docs/screenshots/dashboard.png"><img alt="Dashboard" src="https://raw.githubusercontent.com/timblazing/sleeper-fantasy-dashboard/refs/heads/main/docs/screenshots/dashboard.png" /></a>
+</p>
+
+<p align="center">
+  <a href="https://raw.githubusercontent.com/timblazing/sleeper-fantasy-dashboard/refs/heads/main/docs/screenshots/players.png"><img alt="Players" src="https://raw.githubusercontent.com/timblazing/sleeper-fantasy-dashboard/refs/heads/main/docs/screenshots/players.png" /></a>
+</p>
+
+<p align="center">
+  <a href="https://raw.githubusercontent.com/timblazing/sleeper-fantasy-dashboard/refs/heads/main/docs/screenshots/playoff-race.png"><img alt="Playoff race" src="https://raw.githubusercontent.com/timblazing/sleeper-fantasy-dashboard/refs/heads/main/docs/screenshots/playoff-race.png" /></a>
+</p>
+
+<p align="center">
+  <a href="https://raw.githubusercontent.com/timblazing/sleeper-fantasy-dashboard/refs/heads/main/docs/screenshots/seed-probability.png"><img alt="Seed probability" src="https://raw.githubusercontent.com/timblazing/sleeper-fantasy-dashboard/refs/heads/main/docs/screenshots/seed-probability.png" /></a>
+</p>
 
 ## Features
 
@@ -6,21 +24,6 @@
 - Player rankings, profiles, projections, injuries, and scouting reports
 - Dynasty trade analysis powered by RosterAudit
 - Username-based league discovery with no manual league IDs
-
-## Run locally
-
-```bash
-bun i
-bun dev
-```
-
-Open [localhost:3000](http://localhost:3000), enter a Sleeper username, and choose a league.
-
-## Roadmap
-
-- [ ] Live NFL scoreboard (maybe ticker) component
-- [ ] Integrate [The Odds API](https://the-odds-api.com/)
-- [ ] Integrate [KeepTradeCut](https://keeptradecut.com/)
 
 ## Data sources
 
