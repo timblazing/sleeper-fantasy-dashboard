@@ -99,15 +99,15 @@ function RosterTable({ entries, leagueId, username, valuesReady }: { entries: Va
     <Table>
       <TableHeader>
         <TableRow>
-          <TableHead className="pl-4">Player</TableHead>
+          <TableHead>Player</TableHead>
           <TableHead className="hidden w-24 sm:table-cell">Position</TableHead>
-          <TableHead className="w-24 pr-4 text-right">Value</TableHead>
+          <TableHead className="w-24 text-right">Value</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
         {entries.map((entry) => (
           <TableRow key={entry.player.id}>
-            <TableCell className="pl-4">
+            <TableCell>
               <div className="flex min-w-0 items-center gap-3">
                 <Avatar className="bg-muted">
                   <AvatarImage alt="" src={headshotUrl(entry.player)} />

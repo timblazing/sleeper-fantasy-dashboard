@@ -25,7 +25,7 @@ function InjuryRow({ entry, leagueId, username }: { entry: InjuryEntry; leagueId
 
   return (
     <TableRow>
-      <TableCell className="pl-4">
+      <TableCell>
         <div className="flex items-center gap-3">
           <Avatar className="bg-muted">
             <AvatarImage alt="" src={headshotUrl(entry.player)} />
@@ -45,7 +45,7 @@ function InjuryRow({ entry, leagueId, username }: { entry: InjuryEntry; leagueId
         </div>
       </TableCell>
       <TableCell className="max-sm:hidden"><PositionBadge position={entry.player.position} /></TableCell>
-      <TableCell>
+      <TableCell className="max-sm:pr-4">
         <div className="flex flex-wrap items-center gap-1.5">
           <Badge variant={SEVERITY_BADGE[entry.severity]}>{entry.player.injuryStatus ?? SEVERITY_LABELS[entry.severity]}</Badge>
           {entry.onInjuredReserve ? <Badge variant="outline">IR slot</Badge> : null}
@@ -88,12 +88,12 @@ export function InjuryReportTable({ entries, leagueId, query, report }: { entrie
         <Table className="max-sm:table-fixed">
           <TableHeader>
             <TableRow>
-              <TableHead className="h-auto py-2 pl-4">Player</TableHead>
-              <TableHead className="h-auto py-2 max-sm:hidden">Pos</TableHead>
-              <TableHead className="h-auto w-28 py-2">Status</TableHead>
-              <TableHead className="h-auto py-2 max-sm:hidden">Injury</TableHead>
-              <TableHead className="h-auto py-2 hidden md:table-cell">Practice</TableHead>
-              <TableHead className="h-auto py-2 max-sm:hidden">Fantasy team</TableHead>
+              <TableHead>Player</TableHead>
+              <TableHead className="max-sm:hidden">Pos</TableHead>
+              <TableHead className="w-28 max-sm:pr-4">Status</TableHead>
+              <TableHead className="max-sm:hidden">Injury</TableHead>
+              <TableHead className="hidden md:table-cell">Practice</TableHead>
+              <TableHead className="max-sm:hidden">Fantasy team</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>

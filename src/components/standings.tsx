@@ -35,21 +35,21 @@ export function StandingsTable({ rows, myRosterId, leagueId, username }: { rows:
       <Table className="table-fixed @md:table-auto">
         <TableHeader>
           <TableRow>
-            <TableHead className="w-12 pl-4"><span className="@md:hidden">#</span><span className="hidden @md:inline">Rank</span></TableHead>
+            <TableHead className="w-12"><span className="@md:hidden">#</span><span className="hidden @md:inline">Rank</span></TableHead>
             <TableHead>Team</TableHead>
             <TableHead className="w-16 pr-2 text-right @2xl:pr-4 @2xl:text-left">W–L</TableHead>
-            <TableHead className="hidden pr-4 text-right @2xl:table-cell @3xl:pr-0">PF</TableHead>
-            <TableHead className="hidden pr-4 text-right @3xl:table-cell">PA</TableHead>
+            <TableHead className="hidden text-right @2xl:table-cell">PF</TableHead>
+            <TableHead className="hidden text-right @3xl:table-cell">PA</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {rows.map((team, index) => (
             <TableRow className={cn(team.rosterId === myRosterId && "bg-muted/50")} key={team.rosterId}>
-              <TableCell className="pl-4 font-mono font-medium">{index + 1}</TableCell>
+              <TableCell className="font-mono font-medium">{index + 1}</TableCell>
               <TableCell><TeamCell leagueId={leagueId} team={team} username={username} /></TableCell>
               <TableCell className="pr-2 text-right font-mono tabular-nums @2xl:pr-4 @2xl:text-left">{record(team)}</TableCell>
-              <TableCell className="hidden pr-4 text-right font-mono tabular-nums @2xl:table-cell @3xl:pr-0">{team.pointsFor.toFixed(1)}</TableCell>
-              <TableCell className="hidden pr-4 text-right font-mono tabular-nums text-muted-foreground @3xl:table-cell">{team.pointsAgainst.toFixed(1)}</TableCell>
+              <TableCell className="hidden text-right font-mono tabular-nums @2xl:table-cell">{team.pointsFor.toFixed(1)}</TableCell>
+              <TableCell className="hidden text-right font-mono tabular-nums text-muted-foreground @3xl:table-cell">{team.pointsAgainst.toFixed(1)}</TableCell>
             </TableRow>
           ))}
         </TableBody>

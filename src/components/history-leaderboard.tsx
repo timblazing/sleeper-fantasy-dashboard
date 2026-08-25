@@ -72,23 +72,23 @@ export function HistoryLeaderboard({ rows, seasonCount }: { rows: ManagerRow[]; 
       <CardContent className="px-0">
         <Table>
           <TableHeader>
-            <TableRow className="hover:bg-transparent">
-              <TableHead className="w-10 pl-4 text-center">#</TableHead>
+            <TableRow>
+              <TableHead className="w-10 text-center">#</TableHead>
               <TableHead>Team</TableHead>
-              <TableHead className="text-right">Record</TableHead>
-              <TableHead className="text-right max-sm:hidden">PPG</TableHead>
+              <TableHead className="text-right max-sm:pr-4">Record</TableHead>
+              <TableHead className="text-right max-sm:hidden max-md:pr-4">PPG</TableHead>
               <TableHead className="text-right max-md:hidden">WAE</TableHead>
-              <TableHead className="text-right max-md:hidden">Efficiency</TableHead>
-              <TableHead className="pr-4 text-right max-lg:hidden">Seasons</TableHead>
+              <TableHead className="text-right max-md:hidden max-lg:pr-4">Efficiency</TableHead>
+              <TableHead className="text-right max-lg:hidden">Seasons</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {sorted.map((row, index) => (
               <TableRow key={row.ownerId} className={cn(!row.active && "opacity-60")}>
-                <TableCell className="pl-4 text-center font-mono tabular-nums text-muted-foreground">{index + 1}</TableCell>
+                <TableCell className="text-center font-mono tabular-nums text-muted-foreground">{index + 1}</TableCell>
                 <TableCell>
                   <div className="flex items-center gap-2.5">
-                    <Avatar className="size-7">
+                    <Avatar>
                       {row.avatar ? <AvatarImage alt="" src={avatarUrl(row.avatar)} /> : null}
                       <AvatarFallback className="text-[0.5rem]">{initials(row.name)}</AvatarFallback>
                     </Avatar>
@@ -111,10 +111,10 @@ export function HistoryLeaderboard({ rows, seasonCount }: { rows: ManagerRow[]; 
                   <span className="font-mono tabular-nums">{row.wins}–{row.losses}{row.ties ? `–${row.ties}` : ""}</span>
                   <span className="ml-1.5 text-xs text-muted-foreground max-sm:hidden">{row.games ? `${(row.winPct * 100).toFixed(0)}%` : "—"}</span>
                 </TableCell>
-                <TableCell className="text-right font-mono tabular-nums max-sm:hidden">{row.games ? row.pointsPerGame.toFixed(1) : "—"}</TableCell>
+                <TableCell className="text-right font-mono tabular-nums max-sm:hidden max-md:pr-4">{row.games ? row.pointsPerGame.toFixed(1) : "—"}</TableCell>
                 <TableCell className="text-right max-md:hidden">{row.games ? <Signed value={row.winsAboveExpected} /> : <span className="text-muted-foreground">—</span>}</TableCell>
-                <TableCell className="text-right font-mono tabular-nums max-md:hidden">{row.games ? `${(row.managerEfficiency * 100).toFixed(0)}%` : "—"}</TableCell>
-                <TableCell className="pr-4 text-right max-lg:hidden">
+                <TableCell className="text-right font-mono tabular-nums max-md:hidden max-lg:pr-4">{row.games ? `${(row.managerEfficiency * 100).toFixed(0)}%` : "—"}</TableCell>
+                <TableCell className="text-right max-lg:hidden">
                   <span className="font-mono text-xs tabular-nums text-muted-foreground">{row.seasons.map((season) => season.season).join(" · ")}</span>
                 </TableCell>
               </TableRow>

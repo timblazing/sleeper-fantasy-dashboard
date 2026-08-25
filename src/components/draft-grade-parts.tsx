@@ -93,9 +93,11 @@ export function SortHeader({ active, direction, onClick, align = "right", childr
   return (
     <button
       className={cn(
-        "-mx-1 inline-flex w-full items-center gap-1 rounded px-1 py-0.5 text-xs font-medium uppercase tracking-wider transition-colors hover:text-foreground",
+        // Type comes from the enclosing <th> so sortable and plain headers
+        // share one baseline; only the active/idle color differs.
+        "-mx-1 inline-flex w-full items-center gap-1 rounded px-1 py-0.5 font-[inherit] text-[inherit] tracking-[inherit] uppercase transition-colors hover:text-foreground",
         align === "right" ? "justify-end" : "justify-start",
-        active ? "text-foreground" : "text-muted-foreground",
+        active && "text-foreground",
       )}
       onClick={onClick}
       type="button"

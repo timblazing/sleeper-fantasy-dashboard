@@ -77,21 +77,21 @@ function ManagerTable({ data, onSelect }: { data: DraftGradeData; onSelect: (ros
       <CardContent className="px-0">
         <Table className="max-sm:table-fixed">
           <TableHeader>
-            <TableRow className="hover:bg-transparent">
-              <TableHead className="w-10 pl-4 text-xs font-medium uppercase tracking-wider text-muted-foreground sm:pl-5">#</TableHead>
-              <TableHead className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Manager</TableHead>
+            <TableRow>
+              <TableHead className="w-10">#</TableHead>
+              <TableHead>Manager</TableHead>
               <TableHead className="w-16 text-right">{header("picks", "Picks")}</TableHead>
               <TableHead className="hidden w-20 text-right sm:table-cell">{header("hitRate", "Hit %")}</TableHead>
               <TableHead className="hidden w-28 md:table-cell" />
               <TableHead className="w-24 text-right max-sm:hidden">{header("surplus", "Surplus")}</TableHead>
               <TableHead className="w-16 text-right">{header("grade", "Grade")}</TableHead>
-              <TableHead className="w-8 pr-5 max-sm:hidden" />
+              <TableHead className="w-8 max-sm:hidden" />
             </TableRow>
           </TableHeader>
           <TableBody>
             {managers.map((manager, index) => (
               <TableRow className="cursor-pointer" key={manager.rosterId} onClick={() => onSelect(manager.rosterId)}>
-                <TableCell className="pl-4 text-muted-foreground tabular-nums sm:pl-5">{index + 1}</TableCell>
+                <TableCell className="text-muted-foreground tabular-nums">{index + 1}</TableCell>
                 <TableCell>
                   <div className="flex items-center gap-3">
                     <ManagerAvatar avatar={manager.avatar} name={manager.teamName} className="size-8" />
@@ -106,7 +106,7 @@ function ManagerTable({ data, onSelect }: { data: DraftGradeData; onSelect: (ros
                 <TableCell className="hidden md:table-cell"><SurplusBar surplus={manager.surplusPerPick} scale={scale} /></TableCell>
                 <TableCell className={cn("text-right font-medium tabular-nums max-sm:hidden", valueTone(manager.surplus))}>{signed(manager.surplus)}</TableCell>
                 <TableCell className="text-right"><GradeBadge grade={manager.grade} /></TableCell>
-                <TableCell className="pr-5 max-sm:hidden">
+                <TableCell className="max-sm:hidden">
                   <ChevronRightIcon aria-hidden="true" className="size-4 text-muted-foreground" />
                 </TableCell>
               </TableRow>
@@ -323,20 +323,20 @@ function DraftBoard({ data, onSelect }: { data: DraftGradeData; onSelect: (roste
       <CardContent className="px-0">
         <Table className="max-sm:table-fixed">
           <TableHeader>
-            <TableRow className="hover:bg-transparent">
-              <TableHead className="w-16 pl-5">{header("pick", "Slot", "left")}</TableHead>
-              <TableHead className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Player</TableHead>
-              <TableHead className="hidden text-xs font-medium uppercase tracking-wider text-muted-foreground md:table-cell">Picked by</TableHead>
+            <TableRow>
+              <TableHead className="w-16">{header("pick", "Slot", "left")}</TableHead>
+              <TableHead>Player</TableHead>
+              <TableHead className="hidden md:table-cell">Picked by</TableHead>
               <TableHead className="hidden w-24 text-right sm:table-cell">{header("slotValue", "Slot val")}</TableHead>
               <TableHead className="hidden w-24 text-right sm:table-cell">{header("value", "Cur val")}</TableHead>
               <TableHead className="w-28 text-right max-sm:hidden">{header("surplus", "Surplus")}</TableHead>
-              <TableHead className="w-20 pr-5 text-right text-xs font-medium uppercase tracking-wider text-muted-foreground">Grade</TableHead>
+              <TableHead className="w-20 text-right">Grade</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {picks.map((pick) => (
               <TableRow className="cursor-pointer" key={pick.id} onClick={() => onSelect(pick.rosterId)}>
-                <TableCell className="pl-5 font-mono text-xs text-muted-foreground tabular-nums">{pick.pick}</TableCell>
+                <TableCell className="font-mono text-xs text-muted-foreground tabular-nums">{pick.pick}</TableCell>
                 <TableCell>
                   <div className="flex min-w-0 items-center gap-2.5">
                     <PlayerHeadshot className="size-8 shrink-0" playerId={pick.playerId} position={pick.position} />
@@ -366,7 +366,7 @@ function DraftBoard({ data, onSelect }: { data: DraftGradeData; onSelect: (roste
                   <span className={cn("text-sm font-medium tabular-nums", valueTone(pick.surplus))}>{signed(pick.surplus)}</span>
                   <div className="mt-1"><SurplusBar surplus={pick.surplus} scale={scale} /></div>
                 </TableCell>
-                <TableCell className="pr-5 text-right"><GradeBadge grade={pick.grade} /></TableCell>
+                <TableCell className="text-right"><GradeBadge grade={pick.grade} /></TableCell>
               </TableRow>
             ))}
           </TableBody>
@@ -394,20 +394,20 @@ function CareerTable({ data }: { data: DraftGradeData }) {
         <div className="overflow-x-auto">
           <Table className="max-sm:table-fixed">
             <TableHeader>
-              <TableRow className="hover:bg-transparent">
-                <TableHead className="pl-5">Manager</TableHead>
+              <TableRow>
+                <TableHead>Manager</TableHead>
                 <TableHead className="text-right max-sm:hidden">Drafts</TableHead>
                 <TableHead className="w-14 text-right">Picks</TableHead>
                 <TableHead className="text-right max-sm:hidden">Hit</TableHead>
                 {seasons.map((season) => <TableHead className="text-center max-sm:hidden" key={season}>{season}</TableHead>)}
                 <TableHead className="text-right max-sm:hidden">Per pick</TableHead>
-                <TableHead className="w-16 pr-4 text-right sm:pr-5">Grade</TableHead>
+                <TableHead className="w-16 text-right">Grade</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {data.career.map((row) => (
                 <TableRow key={row.rosterId}>
-                  <TableCell className="pl-5">
+                  <TableCell>
                     <div className="flex items-center gap-3">
                       <ManagerAvatar avatar={row.avatar} name={row.teamName} className="size-7" />
                       <span className="truncate font-medium">{row.teamName}</span>
@@ -425,7 +425,7 @@ function CareerTable({ data }: { data: DraftGradeData }) {
                     );
                   })}
                   <TableCell className={cn("text-right font-medium tabular-nums max-sm:hidden", valueTone(row.surplusPerPick))}>{signed(row.surplusPerPick)}</TableCell>
-                  <TableCell className="pr-4 text-right sm:pr-5"><GradeBadge grade={row.grade} /></TableCell>
+                  <TableCell className="text-right"><GradeBadge grade={row.grade} /></TableCell>
                 </TableRow>
               ))}
             </TableBody>

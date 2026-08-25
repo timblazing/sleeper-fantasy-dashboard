@@ -66,22 +66,22 @@ export function PowerRankingsTable({ rankings, leagueId, username }: { rankings:
     <TooltipProvider>
       <Table>
         <TableHeader>
-          <TableRow className="hover:bg-transparent">
-            <TableHead className="h-auto w-14 py-2 pl-4">Rank</TableHead>
-            <TableHead className="h-auto py-2">Team</TableHead>
-            <TableHead className="hidden h-auto w-24 py-2 sm:table-cell">Tier</TableHead>
-            <TableHead className="hidden h-auto w-20 py-2 md:table-cell">W–L</TableHead>
-            <TableHead className="hidden h-auto w-16 py-2 text-right lg:table-cell">PPG</TableHead>
-            <TableHead className="hidden h-auto w-28 py-2 lg:table-cell">Last {rankings.formWeeks}</TableHead>
-            {rankings.hasValues ? <TableHead className="hidden h-auto w-20 py-2 text-right xl:table-cell">Value</TableHead> : null}
-            <TableHead className="hidden h-auto w-20 py-2 pr-4 text-right xl:table-cell">Luck</TableHead>
+          <TableRow>
+            <TableHead className="w-14">Rank</TableHead>
+            <TableHead className="max-sm:pr-4">Team</TableHead>
+            <TableHead className="hidden w-24 sm:table-cell max-md:pr-4">Tier</TableHead>
+            <TableHead className="hidden w-20 md:table-cell max-lg:pr-4">W–L</TableHead>
+            <TableHead className="hidden w-16 text-right lg:table-cell">PPG</TableHead>
+            <TableHead className="hidden w-28 lg:table-cell max-xl:pr-4">Last {rankings.formWeeks}</TableHead>
+            {rankings.hasValues ? <TableHead className="hidden w-20 text-right xl:table-cell">Value</TableHead> : null}
+            <TableHead className="hidden w-20 text-right xl:table-cell">Luck</TableHead>
           </TableRow>
         </TableHeader>
 
         <TableBody>
           {rankings.rows.map((row) => (
             <TableRow className={cn(row.isUser && "bg-primary/[0.06] hover:bg-primary/[0.09]")} key={row.rosterId}>
-              <TableCell className="pl-4">
+              <TableCell>
                 <div className="flex items-center gap-2">
                   {/* A short colour rail carries the tier without spending a column on it at narrow widths. */}
                   <span aria-hidden="true" className={cn("h-6 w-0.5 rounded-full", TIER[row.tier].rail)} />
@@ -90,9 +90,9 @@ export function PowerRankingsTable({ rankings, leagueId, username }: { rankings:
                 </div>
               </TableCell>
 
-              <TableCell>
+              <TableCell className="max-sm:pr-4">
                 <div className="flex items-center gap-3">
-                  <Avatar className="size-8">
+                  <Avatar>
                     {row.avatar ? <AvatarImage alt="" src={avatarUrl(row.avatar)} /> : null}
                     <AvatarFallback className="text-[0.625rem]">{initials(row.name)}</AvatarFallback>
                   </Avatar>
@@ -106,11 +106,11 @@ export function PowerRankingsTable({ rankings, leagueId, username }: { rankings:
                 </div>
               </TableCell>
 
-              <TableCell className="hidden sm:table-cell">
+              <TableCell className="hidden sm:table-cell max-md:pr-4">
                 <Badge className={cn("px-1.5 text-[0.625rem] font-medium", TIER[row.tier].chip)} variant="outline">{TIER[row.tier].label}</Badge>
               </TableCell>
 
-              <TableCell className="hidden font-mono text-xs tabular-nums md:table-cell">
+              <TableCell className="hidden font-mono text-xs tabular-nums md:table-cell max-lg:pr-4">
                 {row.wins}–{row.losses}{row.ties ? `–${row.ties}` : ""}
               </TableCell>
 
@@ -118,7 +118,7 @@ export function PowerRankingsTable({ rankings, leagueId, username }: { rankings:
                 {rankings.started ? row.ppg.toFixed(1) : "—"}
               </TableCell>
 
-              <TableCell className="hidden lg:table-cell">
+              <TableCell className="hidden lg:table-cell max-xl:pr-4">
                 <span className="flex items-center gap-2">
                   <FormDots results={row.formResults} />
                   <span className="font-mono text-xs tabular-nums text-muted-foreground">{rankings.started ? row.formPpg.toFixed(1) : "—"}</span>
@@ -131,7 +131,7 @@ export function PowerRankingsTable({ rankings, leagueId, username }: { rankings:
                 </TableCell>
               ) : null}
 
-              <TableCell className="hidden pr-4 text-right xl:table-cell">
+              <TableCell className="hidden text-right xl:table-cell">
                 <Luck row={row} started={rankings.started} />
               </TableCell>
             </TableRow>

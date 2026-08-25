@@ -27,7 +27,7 @@ function RankingsRowCells({ row, leagueId, username, maxValue }: { row: Rankings
 
   return (
     <TableRow className={mine ? "border-l-2 border-l-primary bg-muted/40" : undefined}>
-      <TableCell className="pl-4 font-mono font-medium text-muted-foreground">{row.rank}</TableCell>
+      <TableCell className="font-mono font-medium text-muted-foreground">{row.rank}</TableCell>
       <TableCell>
         {row.kind === "pick" ? (
           <div className="flex items-center gap-3"><Avatar><AvatarFallback>PK</AvatarFallback></Avatar><div className="min-w-0"><p className="truncate font-medium">{row.label}</p><p className="text-xs text-muted-foreground">Draft pick</p></div></div>
@@ -45,11 +45,11 @@ function RankingsRowCells({ row, leagueId, username, maxValue }: { row: Rankings
       <TableCell className="max-sm:hidden">
         {row.kind === "pick" ? <Badge size="position" variant="outline">PICK</Badge> : <PositionBadge label={row.position} position={row.position} />}
       </TableCell>
-      <TableCell>
+      <TableCell className="max-md:pr-4">
         <div className="flex min-w-20 flex-col gap-1 sm:min-w-28"><span className="font-mono font-medium tabular-nums">{row.value.toLocaleString()}</span><Progress className="w-full max-sm:hidden" value={share} /></div>
       </TableCell>
-      <TableCell className="hidden text-muted-foreground md:table-cell">{row.kind === "pick" ? "—" : row.age !== null ? row.age.toFixed(1) : "—"}</TableCell>
-      <TableCell className="hidden pr-4 lg:table-cell">{row.kind === "pick" ? <span className="text-muted-foreground">—</span> : <Trend value={row.trend7d} />}</TableCell>
+      <TableCell className="hidden text-muted-foreground md:table-cell max-lg:pr-4">{row.kind === "pick" ? "—" : row.age !== null ? row.age.toFixed(1) : "—"}</TableCell>
+      <TableCell className="hidden lg:table-cell">{row.kind === "pick" ? <span className="text-muted-foreground">—</span> : <Trend value={row.trend7d} />}</TableCell>
     </TableRow>
   );
 }
@@ -79,12 +79,12 @@ export function RankingsTable({ view, query }: { view: RankingsView; query: Rank
         <Table className="max-sm:table-fixed">
           <TableHeader>
             <TableRow>
-              <TableHead className="w-12 pl-4"><span className="sm:hidden">#</span><span className="max-sm:hidden">Rank</span></TableHead>
+              <TableHead className="w-12"><span className="sm:hidden">#</span><span className="max-sm:hidden">Rank</span></TableHead>
               <TableHead>Player</TableHead>
               <TableHead className="max-sm:hidden">Position</TableHead>
-              <TableHead className="w-24">Value</TableHead>
-              <TableHead className="hidden md:table-cell">Age</TableHead>
-              <TableHead className="hidden pr-4 lg:table-cell">7d</TableHead>
+              <TableHead className="w-24 max-md:pr-4">Value</TableHead>
+              <TableHead className="hidden md:table-cell max-lg:pr-4">Age</TableHead>
+              <TableHead className="hidden lg:table-cell">7d</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
