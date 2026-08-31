@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { resetRequestRateLimitForTests } from "@/lib/request-rate-limit";
 import { deriveTradeSettings } from "@/lib/trade-lab";
 import type { SleeperLeague } from "@/lib/types";
 
@@ -34,12 +35,15 @@ describe("deriveTradeSettings", () => {
 });
 
 describe("POST /api/roster-audit/trade", () => {
-  afterEach(() => vi.resetModules());
+  afterEach(() => {
+    resetRequestRateLimitForTests();
+    vi.resetModules();
+  });
 
-  async function post(body: unknown, evaluate = vi.fn()) {
+  async function post(body: unknown, evaluate = vi.fn(), headers?: HeadersInit) {
     vi.doMock("@/lib/trade-lab", () => ({ evaluateTrade: evaluate }));
     const { POST } = await import("@/app/api/roster-audit/trade/route");
-    const response = await POST(new Request("http://localhost/api/roster-audit/trade", { method: "POST", body: JSON.stringify(body) }));
+    const response = await POST(new Request("http://localhost/api/roster-audit/trade", { method: "POST", body: JSON.stringify(body), headers }));
     return { response, payload: await response.json() as { error?: string }, evaluate };
   }
 
@@ -73,5 +77,46 @@ describe("POST /api/roster-audit/trade", () => {
     const evaluate = vi.fn().mockResolvedValue({ ok: false, error: { kind: "missing-key", message: "API key required", retryable: false } });
     const { response } = await post({ leagueId: "1", sideA: [{ type: "player", id: "4984" }], sideB: [{ type: "player", id: "9509" }] }, evaluate);
     expect(response.status).toBe(503);
+  });
+
+  it("limits valid requests per client before calling the evaluator", async () => {
+    const evaluate = vi.fn().mockResolvedValue({ ok: true, data: { verdict: {} }, attribution: { text: "t", url: "u" } });
+    const body = { leagueId: "1", sideA: [{ type: "player", id: "4984" }], sideB: [{ type: "player", id: "9509" }] };
+
+    for (let request = 0; request < 20; request += 1) {
+      expect((await post(body, evaluate, { "x-forwarded-for": "203.0.113.10" })).response.status).toBe(200);
+    }
+
+    const limited = await post(body, evaluate, { "x-forwarded-for": "203.0.113.10" });
+    expect(limited.response.status).toBe(429);
+    expect(limited.response.headers.get("retry-after")).toBe("600");
+    expect(evaluate).toHaveBeenCalledTimes(20);
+  });
+
+  it("does not spend the valid-request budget on an invalid body", async () => {
+    const evaluate = vi.fn().mockResolvedValue({ ok: true, data: { verdict: {} }, attribution: { text: "t", url: "u" } });
+    const invalidBody = { leagueId: "1", sideA: [{ type: "player", id: "4984" }], sideB: [] };
+    const validBody = { leagueId: "1", sideA: [{ type: "player", id: "4984" }], sideB: [{ type: "player", id: "9509" }] };
+    const headers = { "x-real-ip": "198.51.100.12" };
+
+    expect((await post(invalidBody, evaluate, headers)).response.status).toBe(400);
+    for (let request = 0; request < 20; request += 1) {
+      expect((await post(validBody, evaluate, headers)).response.status).toBe(200);
+    }
+    expect((await post(validBody, evaluate, headers)).response.status).toBe(429);
+    expect(evaluate).toHaveBeenCalledTimes(20);
+  });
+
+  it("gives a different client address an independent budget", async () => {
+    const evaluate = vi.fn().mockResolvedValue({ ok: true, data: { verdict: {} }, attribution: { text: "t", url: "u" } });
+    const body = { leagueId: "1", sideA: [{ type: "player", id: "4984" }], sideB: [{ type: "player", id: "9509" }] };
+
+    for (let request = 0; request < 20; request += 1) {
+      expect((await post(body, evaluate, { "x-forwarded-for": "203.0.113.20" })).response.status).toBe(200);
+    }
+
+    const independent = await post(body, evaluate, { "x-forwarded-for": "203.0.113.21" });
+    expect(independent.response.status).toBe(200);
+    expect(evaluate).toHaveBeenCalledTimes(21);
   });
 });
