@@ -31,4 +31,22 @@ describe("parseStoredAccount", () => {
   it("returns null when the decoded leagueId would traverse the upstream URL path", () => {
     expect(parseStoredAccount(`bob:${encodeURIComponent("../foo")}`)).toBeNull();
   });
+
+  it("returns null without throwing for malformed username encoding", () => {
+    const parse = () => parseStoredAccount("%E0%A4%A:1180263650897608704");
+
+    expect(parse).not.toThrow();
+    expect(parse()).toBeNull();
+  });
+
+  it("returns null without throwing for malformed leagueId encoding", () => {
+    const parse = () => parseStoredAccount("bob:%E0%A4%A");
+
+    expect(parse).not.toThrow();
+    expect(parse()).toBeNull();
+  });
+
+  it("returns null when a valid username has no valid league segment", () => {
+    expect(parseStoredAccount("bob:")).toBeNull();
+  });
 });

@@ -1,6 +1,8 @@
+import { isIP } from "node:net";
 import { z } from "zod";
 import { evaluateTrade } from "@/lib/trade-lab";
 import type { RaError } from "@/lib/roster-audit";
+import { isRequestAllowed } from "@/lib/request-rate-limit";
 
 const assetSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("player"), id: z.string().min(1).max(32) }),
@@ -11,6 +13,19 @@ const assetSchema = z.discriminatedUnion("type", [
 // dynasty trade needs more than this, and /trade/calculate is the only rate-limited endpoint.
 const sideSchema = z.array(assetSchema).min(1).max(12);
 const requestSchema = z.object({ leagueId: z.string().min(1).max(32), sideA: sideSchema, sideB: sideSchema });
+
+function getClientAddress(headers: Headers): string {
+  const forwardedAddress = headers.get("x-forwarded-for")
+    ?.split(",")
+    .map((address) => address.trim())
+    .find((address) => isIP(address) !== 0);
+  if (forwardedAddress) return forwardedAddress;
+
+  const realAddress = headers.get("x-real-ip")?.trim();
+  if (realAddress && isIP(realAddress) !== 0) return realAddress;
+
+  return "anonymous";
+}
 
 /** Upstream failures map to statuses the client can act on; only the message is user-facing. */
 function describe(error: RaError): { status: number; message: string } {
@@ -32,6 +47,13 @@ export async function POST(request: Request) {
   const parsed = requestSchema.safeParse(body);
   if (!parsed.success) {
     return Response.json({ error: "Add at least one player or pick to both sides of the trade." }, { status: 400 });
+  }
+
+  if (!isRequestAllowed(getClientAddress(request.headers))) {
+    return Response.json(
+      { error: "Trade calculations are temporarily limited. Try again shortly." },
+      { status: 429, headers: { "retry-after": "600" } },
+    );
   }
 
   const { leagueId, sideA, sideB } = parsed.data;
