@@ -16,8 +16,12 @@ export type StoredAccount = { username: string; leagueId: string };
  */
 export function parseStoredAccount(value: string | undefined): StoredAccount | null {
   if (!value) return null;
-  const [username, leagueId] = value.split(":").map(decodeURIComponent);
-  return username && leagueId && isLeagueId(leagueId) ? { username, leagueId } : null;
+  try {
+    const [username, leagueId] = value.split(":").map(decodeURIComponent);
+    return username && leagueId && isLeagueId(leagueId) ? { username, leagueId } : null;
+  } catch {
+    return null;
+  }
 }
 
 export function rememberAccount({ leagueId, username }: StoredAccount) {
