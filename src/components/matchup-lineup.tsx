@@ -33,14 +33,14 @@ function PlayerSide({ entry, reverse, leagueId, username }: { entry: RosterSlot;
         <AvatarFallback className="text-[0.6rem]">{player?.position ?? "—"}</AvatarFallback>
       </Avatar>
       <div className="min-w-0 flex-1">
-        <p className="truncate text-xs font-medium leading-tight sm:text-sm">
+        <p className="line-clamp-2 text-xs font-medium leading-tight sm:text-sm">
           {href ? <Link className="hover:underline" href={href}>{name}</Link> : name}
         </p>
         <p className="truncate text-[0.65rem] leading-tight text-muted-foreground sm:text-xs">
           {opponentLabel(entry)}
         </p>
       </div>
-      <div className="shrink-0 font-mono text-right tabular-nums">
+      <div className="hidden shrink-0 font-mono text-right tabular-nums sm:block">
         <p className="text-xs font-semibold leading-tight sm:text-sm">{points(entry)}</p>
         <p aria-label={`Projected ${projection(entry)} points`} className="text-[0.6rem] leading-tight text-muted-foreground">{projection(entry)}</p>
       </div>
@@ -59,7 +59,7 @@ export function MatchupLineup({ matchup, leagueId, username }: { matchup: Matchu
         const away = matchup.away.slots[index];
         const slot = home?.slot ?? away?.slot ?? null;
         return (
-          <div className="grid grid-cols-[minmax(0,1fr)_2.5rem_minmax(0,1fr)] items-center gap-1 sm:grid-cols-[minmax(0,1fr)_3.25rem_minmax(0,1fr)] sm:gap-2" key={`${home?.slot ?? "home"}-${away?.slot ?? "away"}-${index}`}>
+          <div className="grid grid-cols-[minmax(0,1fr)_1.75rem_minmax(0,1fr)] items-center gap-1 sm:grid-cols-[minmax(0,1fr)_3.25rem_minmax(0,1fr)] sm:gap-2" key={`${home?.slot ?? "home"}-${away?.slot ?? "away"}-${index}`}>
             {home ? <PlayerSide entry={home} leagueId={leagueId} username={username} /> : <span />}
             <span className="flex justify-center">
               <PositionBadge position={slot} label={slot ?? "—"} />

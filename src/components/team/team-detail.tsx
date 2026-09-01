@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { PositionBadge } from "@/components/position-badge";
-import { avatarUrl, initials } from "@/components/standings";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,7 +9,7 @@ import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from "@/components/u
 import { Progress } from "@/components/ui/progress";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { formatValue, headshotUrl } from "@/lib/display";
+import { avatarUrl, formatValue, headshotUrl, initials } from "@/lib/display";
 import type { LeagueTeam, ValuedPlayer } from "@/lib/league-values";
 import { cn, withUsername } from "@/lib/utils";
 

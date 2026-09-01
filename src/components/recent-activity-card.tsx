@@ -2,6 +2,7 @@ import { ArrowLeftRightIcon, MinusIcon, PlusIcon } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from "@/components/ui/empty";
+import { TeamLink } from "@/components/team-link";
 import { headshotUrl } from "@/lib/display";
 import type { ActivityItem, NflPlayer } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -35,7 +36,7 @@ function PlayerMove({ kind, player }: { kind: "add" | "drop"; player: NflPlayer 
   );
 }
 
-function ActivityRow({ item }: { item: ActivityItem }) {
+function ActivityRow({ item, leagueId, username }: { item: ActivityItem; leagueId?: string; username?: string }) {
   const { icon: Icon, chip } = ENTRY_STYLE[item.kind] ?? ENTRY_STYLE.add;
   const moves = [
     ...item.adds.map((player) => ({ kind: "add" as const, player })),
@@ -45,7 +46,14 @@ function ActivityRow({ item }: { item: ActivityItem }) {
   return (
     <li className="border-b py-3 first:pt-0 last:border-b-0 last:pb-0">
       <div className="flex min-w-0 items-baseline gap-x-2 gap-y-0.5 text-xs">
-        <span className="truncate font-semibold">{item.team ?? (item.kind === "trade" ? "League trade" : "League")}</span>
+        <span className="truncate font-semibold">
+          {item.teams.length && leagueId ? item.teams.map((team, index) => (
+            <span key={team.rosterId}>
+              {index ? <span className="px-1 text-muted-foreground">↔</span> : null}
+              <TeamLink leagueId={leagueId} rosterId={team.rosterId} username={username}>{team.name}</TeamLink>
+            </span>
+          )) : item.team ?? (item.kind === "trade" ? "League trade" : "League")}
+        </span>
         <span className="shrink-0 uppercase tracking-wide text-muted-foreground">{item.type}</span>
         <span className="ml-auto shrink-0 text-muted-foreground">{item.time}</span>
       </div>
@@ -72,17 +80,17 @@ function ActivityRow({ item }: { item: ActivityItem }) {
 }
 
 /** The league's last handful of completed moves — trades, waiver claims, and free agent adds. */
-export function RecentActivityCard({ activity }: { activity: ActivityItem[] }) {
+export function RecentActivityCard({ activity, leagueId, username }: { activity: ActivityItem[]; leagueId?: string; username?: string }) {
   return (
-    <Card className="h-full min-h-0">
+    <Card>
       <CardHeader>
         <CardTitle>Recent activity</CardTitle>
       </CardHeader>
-      <CardContent className="min-h-0 flex-1 lg:overflow-y-auto">
+      <CardContent>
         {activity.length ? (
           <ul className="flex flex-col">
             {activity.slice(0, 8).map((item) => (
-              <ActivityRow item={item} key={item.id} />
+              <ActivityRow item={item} key={item.id} leagueId={leagueId} username={username} />
             ))}
           </ul>
         ) : (

@@ -89,24 +89,14 @@ describe("getLeagueHistory", () => {
     expect(team1?.championships).toBe(1);
   });
 
-  test("builds the head-to-head grid from both directions of every game", async () => {
-    const history = await getLeagueHistory("L2025", makeHistorySource());
-
-    // Roster 1 played roster 2 four times in the regular season and won them all.
-    expect(history.headToHead.get("U1:U2")).toEqual({ wins: 4, losses: 0, ties: 0 });
-    expect(history.headToHead.get("U2:U1")).toEqual({ wins: 0, losses: 4, ties: 0 });
-  });
-
   test("derives the record book from the full game log", async () => {
-    const { records, topScores, lowScores } = await getLeagueHistory("L2025", makeHistorySource());
+    const { records } = await getLeagueHistory("L2025", makeHistorySource());
 
     expect(records.mostPointsSeason).toMatchObject({ name: "Team 1", season: "2025", points: 290 });
     expect(records.bestRecord).toMatchObject({ name: "Team 1", wins: 2, losses: 0 });
     expect(records.longestWinStreak).toMatchObject({ name: "Team 1", length: 2 });
     // The single widest margin: 150 - 95 in 2025 week 2.
     expect(records.biggestBlowout).toMatchObject({ margin: 55, winnerName: "Team 1", loserName: "Team 2" });
-    expect(topScores[0]).toMatchObject({ name: "Team 1", points: 150 });
-    expect(lowScores[0]).toMatchObject({ name: "Team 4", points: 80 });
   });
 
   test("counts wins above expected against the whole league, not just the opponent", async () => {

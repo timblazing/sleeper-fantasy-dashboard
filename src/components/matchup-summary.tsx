@@ -27,11 +27,11 @@ function CompactTeam({ probability, reverse, side, leagueId, username }: { proba
       <div className="min-w-0 flex-1">
         <p className="truncate text-[0.65rem] leading-tight text-muted-foreground sm:text-xs">@{side.team.manager}</p>
         {leagueId ? (
-          <Link className="mt-0.5 block truncate text-xs font-semibold leading-tight hover:underline focus-visible:rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:text-base" href={withUsername(`/${leagueId}/teams/${side.team.rosterId}`, username)}>
+          <Link className="mt-0.5 block line-clamp-2 text-xs font-semibold leading-tight hover:underline focus-visible:rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:text-base" href={withUsername(`/${leagueId}/teams/${side.team.rosterId}`, username)}>
             {side.team.name}
           </Link>
         ) : (
-          <p className="mt-0.5 truncate text-xs font-semibold leading-tight sm:text-base">{side.team.name}</p>
+          <p className="mt-0.5 line-clamp-2 text-xs font-semibold leading-tight sm:text-base">{side.team.name}</p>
         )}
         <div className={cn("mt-1.5 flex items-center gap-1.5 sm:mt-2 sm:gap-2", reverse && "flex-row-reverse")}>
           <div className="h-1 flex-1 overflow-hidden rounded-full bg-muted">

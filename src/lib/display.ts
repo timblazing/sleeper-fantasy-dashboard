@@ -3,6 +3,14 @@
 // fetch layer into the browser bundle when these lived beside their data modules.
 import type { NflPlayer, PlayerGame } from "@/lib/types";
 
+export function initials(name: string): string {
+  return name.split(/\s|&/).filter(Boolean).slice(0, 2).map((word) => word[0]).join("").toUpperCase();
+}
+
+export function avatarUrl(id: string): string {
+  return `https://sleepercdn.com/avatars/thumbs/${id}`;
+}
+
 export function headshotUrl(player: Pick<NflPlayer, "id" | "position" | "team">): string {
   return player.position === "DEF" && player.team
     ? `https://sleepercdn.com/images/team_logos/nfl/${player.team.toLowerCase()}.png`

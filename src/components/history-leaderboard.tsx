@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { TeamLink } from "@/components/team-link";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import type { ManagerRow } from "@/lib/league-history";
@@ -38,7 +39,7 @@ function Signed({ value, digits = 2 }: { value: number; digits?: number }) {
  * expected" versus "compiled record", which is what separates the teams that were good from the
  * teams that were lucky.
  */
-export function HistoryLeaderboard({ rows, seasonCount }: { rows: ManagerRow[]; seasonCount: number }) {
+export function HistoryLeaderboard({ leagueId, rows, seasonCount, username }: { leagueId: string; rows: ManagerRow[]; seasonCount: number; username?: string }) {
   const [sort, setSort] = useState<SortKey>("record");
   const active = SORTS.find((entry) => entry.id === sort) ?? SORTS[0];
 
@@ -94,7 +95,7 @@ export function HistoryLeaderboard({ rows, seasonCount }: { rows: ManagerRow[]; 
                     </Avatar>
                     <div className="min-w-0">
                       <div className="flex items-center gap-1.5">
-                        <span className="break-words text-xs font-medium leading-tight sm:truncate sm:text-sm">{row.name}</span>
+                        <TeamLink className="break-words text-xs font-medium leading-tight sm:truncate sm:text-sm" leagueId={leagueId} rosterId={row.rosterId} username={username}>{row.name}</TeamLink>
                         {/* One trophy per title, so a dynasty is visible at a glance. */}
                         {row.championships > 0 ? (
                           <span aria-label={`${row.championships} championship${row.championships === 1 ? "" : "s"}`} className="shrink-0 text-xs">

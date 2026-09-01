@@ -1,6 +1,7 @@
 import { Crown } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { TeamLink } from "@/components/team-link";
 import type { HistorySeason, ManagerRow } from "@/lib/league-history";
 import { cn } from "@/lib/utils";
 
@@ -11,9 +12,9 @@ const initials = (name: string) => name.split(/\s+/).map((word) => word[0]).join
  *
  * A league's history is mostly remembered as a list of champions, and the old page never said who
  * won anything: the title was a `🏆` glyph inside a stat tile. This is the section that gives the
- * page a reason to exist, so it sits directly under the summary strip.
+ * page a reason to exist, so it leads the historical section on the League page.
  */
-export function HistoryChampions({ managers, seasons }: { managers: ManagerRow[]; seasons: HistorySeason[] }) {
+export function HistoryChampions({ leagueId, managers, seasons, username }: { leagueId: string; managers: ManagerRow[]; seasons: HistorySeason[]; username?: string }) {
   const byOwner = new Map(managers.map((row) => [row.ownerId, row]));
 
   const banners = seasons
@@ -62,7 +63,7 @@ export function HistoryChampions({ managers, seasons }: { managers: ManagerRow[]
                   <AvatarFallback className="text-xs">{initials(champion.name)}</AvatarFallback>
                 </Avatar>
                 <div className="min-w-0">
-                  <div className="truncate text-sm font-semibold">{champion.name}</div>
+                  <TeamLink className="block truncate text-sm font-semibold" leagueId={leagueId} rosterId={champion.rosterId} username={username}>{champion.name}</TeamLink>
                   <div className="truncate text-xs text-muted-foreground">{champion.manager}</div>
                 </div>
               </div>
@@ -74,7 +75,7 @@ export function HistoryChampions({ managers, seasons }: { managers: ManagerRow[]
                 {runnerUp ? (
                   <>
                     <span className="text-muted-foreground/50">·</span>
-                    <span className="truncate">def. {runnerUp.name}</span>
+                    <span className="truncate">def. <TeamLink leagueId={leagueId} rosterId={runnerUp.rosterId} username={username}>{runnerUp.name}</TeamLink></span>
                   </>
                 ) : null}
               </div>
@@ -88,7 +89,7 @@ export function HistoryChampions({ managers, seasons }: { managers: ManagerRow[]
             {titleCounts.map((row) => (
               <span className={cn("inline-flex items-center gap-1 rounded-full bg-primary/15 px-2 py-0.5 text-xs font-medium text-primary")} key={row.ownerId}>
                 <Crown className="size-3" />
-                {row.name}
+                <TeamLink leagueId={leagueId} rosterId={row.rosterId} username={username}>{row.name}</TeamLink>
                 <span className="font-mono tabular-nums">×{row.championships}</span>
               </span>
             ))}

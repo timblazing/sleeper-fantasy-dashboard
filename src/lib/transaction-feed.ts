@@ -107,6 +107,7 @@ export function toActivityItem(entry: TransactionEntry): ActivityItem {
     time: entry.time,
     kind: transactionKind(entry),
     team: entry.type === "trade" ? null : side?.teamName ?? null,
+    teams: entry.sides.map(({ rosterId, teamName }) => ({ rosterId, name: teamName })),
     adds: side?.adds ?? [],
     drops: side?.drops ?? [],
     bid: entry.bid,

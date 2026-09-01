@@ -5,22 +5,18 @@ import { getMatchupBoard } from "@/lib/matchup-detail";
 import { getNflLeaguesForUsername } from "@/lib/sleeper";
 import { getTransactionFeed, toActivityItem } from "@/lib/transaction-feed";
 import { withUsername } from "@/lib/utils";
-import type { ActivityItem, MatchupDetail, RosterSlot, SleeperAccount, StandingRow } from "@/lib/types";
+import type { ActivityItem, MatchupDetail, RosterSlot, SleeperAccount } from "@/lib/types";
 
 export type Tone = "positive" | "warning" | "critical" | "neutral";
 export type Insight = { id: string; tone: Tone; title: string; detail: string };
 export type RecommendedAction = { id: string; tone: Tone; label: string; title: string; detail: string; href: string | null; cta: string | null };
-export type PositionScarcityRow = { rosterId: number; manager: string; value: number; isUser: boolean };
+export type PositionScarcityRow = { rosterId: number; name: string; manager: string; value: number; isUser: boolean };
 export type PositionScarcity = { position: (typeof ROOM_POSITIONS)[number]; topThreeShare: number; rows: PositionScarcityRow[] };
-export type ChampionshipOddsRow = { rosterId: number; manager: string; odds: number; ppg: number; isUser: boolean; tier: "contention" | "fringe" | "out" };
-export type ChampionshipOddsSeason = { season: number; rows: ChampionshipOddsRow[] };
 export type TeamOutlook = { grade: string; label: string; detail: string; valueRank: number; powerRank: number; teams: number; ppg: number };
 /** A single tile in the headline metric strip at the top of the overview. */
 export type KeyMetric = { id: string; label: string; value: string; detail: string; tone: Tone };
-export type TrajectoryWindow = "Compete" | "Retool" | "Rebuild";
-export type Trajectory = { window: TrajectoryWindow; tone: Tone; meta: string; detail: string };
 export type SeasonPhase = { label: string; tone: Tone; detail: string };
-export type TimelineMarker = { id: string; label: string; week: number; detail: string; state: "past" | "now" | "upcoming" };
+export type TimelineMarker = { id: string; label: string; week: number; state: "past" | "now" | "upcoming" };
 /** The season rendered as a single week rail, with the milestones that change how you play it. */
 export type SeasonTimeline = { startWeek: number; endWeek: number; currentWeek: number; phase: SeasonPhase; markers: TimelineMarker[] };
 
@@ -41,14 +37,10 @@ export type OverviewData = {
   actions: RecommendedAction[];
   /** Every team ranked by position-room value, for the league-wide scarcity view. */
   positionScarcity: PositionScarcity[];
-  /** Four title windows blending projected scoring with the roster strength that carries forward. */
-  championshipOdds: ChampionshipOddsSeason[];
   activity: ActivityItem[];
-  standings: StandingRow[];
   valuesReady: boolean;
   /** Headline numbers for the metric strip. Empty until a team is connected. */
   metrics: KeyMetric[];
-  trajectory: Trajectory | null;
   phase: SeasonPhase;
   timeline: SeasonTimeline;
 };
@@ -68,10 +60,6 @@ const plural = (count: number, word: string) => `${count} ${word}${count === 1 ?
 function coreAge(team: LeagueTeam): number | null {
   const ages = team.roster.slice(0, 10).map((entry) => entry.player.age).filter((age): age is number => age !== null);
   return ages.length ? ages.reduce((sum, age) => sum + age, 0) / ages.length : null;
-}
-
-function toStandingRow(team: LeagueTeam): StandingRow {
-  return { rank: team.valueRank, rosterId: team.rosterId, division: 0, name: team.name, manager: team.manager, avatar: team.avatar, wins: team.wins, losses: team.losses, ties: team.ties, pointsFor: team.pointsFor, pointsAgainst: team.pointsAgainst, value: team.value || null };
 }
 
 function buildOutlook(team: LeagueTeam, teams: number, week: number): TeamOutlook {
@@ -207,6 +195,7 @@ function buildPositionScarcity(context: LeagueValueContext, team: LeagueTeam | n
     const rows = context.teams
       .map((entry) => ({
         rosterId: entry.rosterId,
+        name: entry.name,
         manager: entry.manager,
         value: entry.rooms.find((room) => room.position === position)?.value ?? 0,
         isUser: entry.rosterId === team?.rosterId,
@@ -216,71 +205,6 @@ function buildPositionScarcity(context: LeagueValueContext, team: LeagueTeam | n
     const topThree = rows.slice(0, 3).reduce((sum, row) => sum + row.value, 0);
 
     return { position, topThreeShare: total ? Math.round((topThree / total) * 100) : 0, rows };
-  });
-}
-
-type ChampionshipTeam = Pick<LeagueTeam, "rosterId" | "manager" | "name" | "pointsFor" | "value" | "valueRank" | "powerRank" | "wins" | "losses" | "ties"> & {
-  projectedPpg: number | null;
-  isUser: boolean;
-};
-
-const scale = (value: number, min: number, max: number) => max === min ? 0.5 : (value - min) / (max - min);
-
-/** Convert relative strengths into tenths of a percent that add up to exactly 100. */
-function percentageShares(strengths: number[]): number[] {
-  const weights = strengths.map((strength) => Math.exp(strength * 3.4));
-  const total = weights.reduce((sum, weight) => sum + weight, 0) || 1;
-  const exact = weights.map((weight) => (weight / total) * 1000);
-  const tenths = exact.map(Math.floor);
-  const remaining = 1000 - tenths.reduce((sum, value) => sum + value, 0);
-  const order = exact.map((value, index) => ({ index, remainder: value - Math.floor(value) })).toSorted((a, b) => b.remainder - a.remainder);
-  for (let index = 0; index < remaining; index += 1) tenths[order[index].index] += 1;
-  return tenths.map((value) => value / 10);
-}
-
-export function buildChampionshipOdds(teams: ChampionshipTeam[], firstSeason: number, playoffTeams = 6): ChampionshipOddsSeason[] {
-  if (!teams.length) return [];
-
-  // A team with no projection and no games played has no points signal at all — common
-  // whenever the projections board is down. Ranking it on the raw points scale would drop
-  // it to ~1 against everyone else's ~110 and pin its odds at zero, so it borrows the known
-  // range instead: best power rank lands at the top of it, worst at the bottom.
-  const known = teams.map((team) => {
-    const games = team.wins + team.losses + team.ties;
-    return team.projectedPpg ?? (games ? team.pointsFor / games : null);
-  });
-  const measured = known.filter((points): points is number => points !== null);
-  const floor = measured.length ? Math.min(...measured) : 0;
-  const ceiling = measured.length ? Math.max(...measured) : 1;
-  const scoring = known.map((points, index) => points ?? floor + (ceiling - floor) * scale(teams.length - teams[index].powerRank + 1, 1, teams.length));
-  const values = teams.map((team) => team.value || teams.length - team.valueRank + 1);
-  const scoringMin = Math.min(...scoring);
-  const scoringMax = Math.max(...scoring);
-  const valueMin = Math.min(...values);
-  const valueMax = Math.max(...values);
-  const contenderCount = Math.max(1, Math.min(4, playoffTeams));
-  const fringeCount = Math.max(contenderCount, Math.min(teams.length, Math.max(playoffTeams, Math.ceil(teams.length * 2 / 3))));
-
-  return Array.from({ length: 4 }, (_, seasonOffset) => {
-    const rosterWeight = Math.min(0.7, 0.35 + seasonOffset * 0.1);
-    const strengths = teams.map((team, index) => (
-      scale(scoring[index], scoringMin, scoringMax) * (1 - rosterWeight)
-      + scale(values[index], valueMin, valueMax) * rosterWeight
-    ));
-    const shares = percentageShares(strengths);
-    const rows = teams
-      .map((team, index) => ({ team, odds: shares[index], ppg: scoring[index] }))
-      .toSorted((a, b) => b.odds - a.odds)
-      .map(({ team, odds, ppg }, index) => ({
-        rosterId: team.rosterId,
-        manager: team.manager === "Unassigned" ? team.name : team.manager,
-        odds,
-        ppg,
-        isUser: team.isUser,
-        tier: index < contenderCount ? "contention" as const : index < fringeCount ? "fringe" as const : "out" as const,
-      }));
-
-    return { season: firstSeason + seasonOffset, rows };
   });
 }
 
@@ -332,33 +256,6 @@ function dynastyMetric(context: LeagueValueContext, team: LeagueTeam, outlook: T
   return { id: "grade", label: "Roster grade", value: outlook.grade, detail: outlook.label, tone: gradeTone(outlook.grade) };
 }
 
-/**
- * Where the roster sits against the rest of the league, translated into the one decision that
- * follows from it: buy, hold, or sell. Dynasty leagues get the multi-year framing; redraft does not.
- */
-function buildTrajectory(context: LeagueValueContext, team: LeagueTeam, outlook: TeamOutlook): Trajectory {
-  const teams = context.teams.length;
-  const valuePct = teams > 1 ? (teams - team.valueRank) / (teams - 1) : 0.5;
-  const dynasty = context.league.settings.type === 2;
-  const window: TrajectoryWindow = valuePct >= 0.6 ? "Compete" : valuePct >= 0.35 ? "Retool" : "Rebuild";
-  const type = dynasty ? "Dynasty" : context.league.settings.type === 1 ? "Keeper" : "Redraft";
-  const meta = [`${type} ${outlook.grade}`, outlook.label, `${ordinal(team.valueRank)} of ${teams}`].join(" \u00b7 ");
-
-  const detail = window === "Compete"
-    ? dynasty
-      ? "Top-half roster inside its title window. Patch the weak spots without selling future capital."
-      : "Top-half roster. Buy the marginal upgrade \u2014 there is no next year to protect."
-    : window === "Retool"
-      ? dynasty
-        ? "Middle of the pack, which is the expensive place to sit. Pick a direction and commit before the deadline."
-        : "Middle of the pack. One or two targeted trades decide whether you make the playoffs."
-      : dynasty
-        ? "Bottom of the league by value. Convert aging production into picks and young breakouts."
-        : "Bottom of the league by value. Play the waiver wire hard and sell anyone at peak price.";
-
-  return { window, tone: window === "Compete" ? "positive" : window === "Retool" ? "warning" : "neutral", meta, detail };
-}
-
 /** Sleeper stores both of these as week numbers on the league; the defaults match its own. */
 const deadlineWeek = (league: LeagueValueContext["league"]) => league.settings.trade_deadline || 13;
 const playoffWeek = (league: LeagueValueContext["league"]) => league.settings.playoff_week_start || 15;
@@ -390,12 +287,12 @@ function buildTimeline(context: LeagueValueContext): SeasonTimeline {
   const playoffs = playoffWeek(league);
   const title = championshipWeek(league);
   const beforeKickoff = !context.regularSeason;
-  const markers: { id: string; label: string; week: number; detail: string }[] = [
-    ...(beforeKickoff ? [{ id: "current-phase", label: phase.label, week: 0, detail: "Current NFL phase from Sleeper" }] : []),
-    { id: "kickoff", label: "Kickoff", week: 1, detail: "Week 1 lineups lock" },
-    { id: "deadline", label: "Trade deadline", week: deadline, detail: "Last chance to reshape" },
-    { id: "playoffs", label: "Playoffs", week: playoffs, detail: `Top ${league.settings.playoff_teams || 6} advance` },
-    { id: "championship", label: "Championship", week: title, detail: "Final week" },
+  const markers: { id: string; label: string; week: number }[] = [
+    ...(beforeKickoff ? [{ id: "current-phase", label: phase.label, week: 0 }] : []),
+    { id: "kickoff", label: "Kickoff", week: 1 },
+    { id: "deadline", label: "Trade deadline", week: deadline },
+    { id: "playoffs", label: "Playoffs", week: playoffs },
+    { id: "championship", label: "Championship", week: title },
   ];
 
   return {
@@ -436,13 +333,6 @@ export async function getOverviewData(leagueId: string, username?: string): Prom
   const starterValue = (entries: RosterSlot[]) => entries.reduce((sum, entry) => sum + (entry.player ? context.values.get(entry.player.id) ?? 0 : 0), 0);
   const matchupEdge = matchup && team && context.valuesReady ? { mine: starterValue(matchup.home.slots), theirs: starterValue(matchup.away.slots) } : null;
   const outlook = team ? buildOutlook(team, context.teams.length, context.week) : null;
-  const projectedPpg = new Map<number, number | null>();
-  for (const matchup of board?.matchups ?? []) {
-    projectedPpg.set(matchup.home.team.rosterId, matchup.home.projectedScore);
-    projectedPpg.set(matchup.away.team.rosterId, matchup.away.projectedScore);
-  }
-  const firstSeason = Number.parseInt(context.state.season || context.league.season, 10) || Number.parseInt(context.league.season, 10);
-
   return {
     league: {
       id: leagueId,
@@ -465,16 +355,9 @@ export async function getOverviewData(leagueId: string, username?: string): Prom
     insights: team ? buildInsights(context, team, trends, matchup, matchupEdge) : [],
     actions: team ? buildActions(context, team, slots, trends, link) : [],
     positionScarcity: buildPositionScarcity(context, team),
-    championshipOdds: buildChampionshipOdds(
-      context.teams.map((entry) => ({ ...entry, projectedPpg: projectedPpg.get(entry.rosterId) ?? null, isUser: entry.rosterId === team?.rosterId })),
-      firstSeason,
-      context.league.settings.playoff_teams || 6,
-    ),
     activity: feed.map(toActivityItem),
-    standings: context.teams.map(toStandingRow),
     valuesReady: context.valuesReady,
     metrics: team && outlook ? buildMetrics(context, team, outlook) : [],
-    trajectory: team && outlook ? buildTrajectory(context, team, outlook) : null,
     phase: buildPhase(context),
     timeline: buildTimeline(context),
   };

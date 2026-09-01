@@ -42,6 +42,8 @@ export type SeasonEntry = {
 
 export type ManagerRow = {
   ownerId: string;
+  /** The current roster id when this manager is still in the league; former managers have none. */
+  rosterId: number | null;
   /** The most recent team name this owner used. */
   name: string;
   manager: string;
@@ -81,8 +83,6 @@ export type HistoryGame = {
   awayScore: number;
 };
 
-export type ScoreLine = { ownerId: string; name: string; season: string; week: number; points: number };
-
 export type MarginLine = {
   season: string;
   week: number;
@@ -108,22 +108,13 @@ export type RecordBook = {
   closestMatchup: MarginLine | null;
 };
 
-/** One cell of the all-time head-to-head grid: `row` team's record against `column` team. */
-export type HeadToHead = { wins: number; losses: number; ties: number };
-
 export type LeagueHistory = {
   leagueId: string;
   name: string;
   /** Newest season first. */
   seasons: HistorySeason[];
   managers: ManagerRow[];
-  /** Keyed `${rowOwnerId}:${columnOwnerId}`. */
-  headToHead: Map<string, HeadToHead>;
   records: RecordBook;
-  topScores: ScoreLine[];
-  lowScores: ScoreLine[];
-  closestMatchups: MarginLine[];
-  biggestBlowouts: MarginLine[];
   /** True when only the current season resolved — the page explains the missing depth. */
   singleSeason: boolean;
 };
@@ -268,10 +259,10 @@ export async function getLeagueHistory(leagueId: string, source: LeagueSource = 
     }
   }
   const activeOwners = new Set(resolved[0].rosters.map((roster) => roster.owner_id).filter((id): id is string => Boolean(id)));
+  const rosterIdByOwner = new Map(resolved[0].rosters.flatMap((roster) => roster.owner_id ? [[roster.owner_id, roster.roster_id] as const] : []));
 
   // ---- Replay every week of every season ---------------------------------------------------
   const games: HistoryGame[] = [];
-  const scoreLines: ScoreLine[] = [];
   /** Per owner, per season: the running regular-season line. */
   const seasonLines = new Map<string, Map<string, SeasonEntry & { expectedWins: number; medianWeeks: number; weeks: number }>>();
   // Every resolved season, newest first — scoreless live seasons included.
@@ -285,11 +276,6 @@ export async function getLeagueHistory(leagueId: string, source: LeagueSource = 
       const rows = bundle.weeks.get(week) ?? [];
       const playoff = week >= playoffWeekStart;
       const weekScores = rows.map((row) => ({ ownerId: rosterToOwner.get(row.roster_id) ?? `roster-${row.roster_id}`, points: scoreOf(row) })).filter((entry) => entry.points > 0);
-
-      for (const entry of weekScores) {
-        const identity = nameByOwner.get(entry.ownerId);
-        scoreLines.push({ ownerId: entry.ownerId, name: identity?.name ?? "Unknown", season, week, points: entry.points });
-      }
 
       for (const [home, away] of pairWeek(rows)) {
         const homeOwner = rosterToOwner.get(home.roster_id);
@@ -362,21 +348,6 @@ export async function getLeagueHistory(leagueId: string, source: LeagueSource = 
   }
 
   // ---- Aggregate managers -------------------------------------------------------------------
-  const headToHead = new Map<string, HeadToHead>();
-  const bump = (a: string, b: string, result: "win" | "loss" | "tie") => {
-    const key = `${a}:${b}`;
-    const cell = headToHead.get(key) ?? { wins: 0, losses: 0, ties: 0 };
-    if (result === "win") cell.wins += 1;
-    else if (result === "loss") cell.losses += 1;
-    else cell.ties += 1;
-    headToHead.set(key, cell);
-  };
-  for (const game of games) {
-    const result = game.homeScore > game.awayScore ? "win" : game.homeScore < game.awayScore ? "loss" : "tie";
-    bump(game.homeOwner, game.awayOwner, result);
-    bump(game.awayOwner, game.homeOwner, result === "win" ? "loss" : result === "loss" ? "win" : "tie");
-  }
-
   const managers: ManagerRow[] = [...seasonLines.entries()].map(([ownerId, bySeason]) => {
     const identity = nameByOwner.get(ownerId) ?? { name: "Unknown manager", manager: "Unknown", avatar: null };
     const lines = [...bySeason.values()].toSorted((a, b) => Number(b.season) - Number(a.season));
@@ -390,7 +361,7 @@ export async function getLeagueHistory(leagueId: string, source: LeagueSource = 
     );
     const played = total.wins + total.losses + total.ties;
     return {
-      ownerId, name: identity.name, manager: identity.manager, avatar: identity.avatar,
+      ownerId, rosterId: rosterIdByOwner.get(ownerId) ?? null, name: identity.name, manager: identity.manager, avatar: identity.avatar,
       active: activeOwners.has(ownerId),
       wins: total.wins, losses: total.losses, ties: total.ties,
       pointsFor: total.pointsFor, pointsAgainst: total.pointsAgainst, games: played,
@@ -444,7 +415,6 @@ export async function getLeagueHistory(leagueId: string, source: LeagueSource = 
     if (loss && (!longestLossStreak || loss.length > longestLossStreak.length)) longestLossStreak = { name: row.name, ...loss };
   }
 
-  const byPoints = [...scoreLines].filter((line) => line.points > 0).toSorted((a, b) => b.points - a.points);
   const byMargin = [...margins].toSorted((a, b) => a.margin - b.margin);
   const bestSeason = [...completeTotals].toSorted((a, b) => b.points - a.points)[0] ?? null;
   const worstSeason = [...completeTotals].toSorted((a, b) => a.points - b.points)[0] ?? null;
@@ -469,12 +439,7 @@ export async function getLeagueHistory(leagueId: string, source: LeagueSource = 
     name: resolved[0].league.name,
     seasons: seasonMeta,
     managers,
-    headToHead,
     records,
-    topScores: byPoints.slice(0, 10),
-    lowScores: [...byPoints].reverse().slice(0, 10),
-    closestMatchups: byMargin.slice(0, 6),
-    biggestBlowouts: [...margins].toSorted((a, b) => b.margin - a.margin).slice(0, 6),
     singleSeason: seasonMeta.length <= 1,
   };
 }

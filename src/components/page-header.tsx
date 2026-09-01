@@ -1,5 +1,5 @@
 /**
- * The one page heading every route renders. Standings, playoffs, and draft set the
+ * The one page heading every route renders. League and draft set the
  * pattern — a title with a one-line description that says what the reader is looking
  * at — and this keeps the type scale and spacing identical across all of them.
  */

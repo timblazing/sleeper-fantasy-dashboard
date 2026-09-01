@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowRight, CircleAlertIcon, LightbulbIcon, TrendingUpIcon, TriangleAlertIcon } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { TeamLink } from "@/components/team-link";
 import { formatValue } from "@/lib/display";
 import type { OverviewData, PositionScarcity, RecommendedAction, Tone } from "@/lib/team-insights";
 import { cn } from "@/lib/utils";
@@ -49,7 +50,7 @@ function ActionRow({ action }: { action: RecommendedAction }) {
   );
 }
 
-function ScarcityColumn({ scarcity }: { scarcity: PositionScarcity }) {
+function ScarcityColumn({ leagueId, scarcity, username }: { leagueId: string; scarcity: PositionScarcity; username?: string }) {
   const style = POSITION_STYLE[scarcity.position];
   const max = scarcity.rows[0]?.value ?? 1;
   const compactValue = (value: number) => value >= 1000 ? `${(value / 1000).toFixed(1)}K` : formatValue(value);
@@ -64,7 +65,10 @@ function ScarcityColumn({ scarcity }: { scarcity: PositionScarcity }) {
         {scarcity.rows.map((row, index) => (
           <div className="grid grid-cols-[0.75rem_minmax(0,1fr)_minmax(1.5rem,3.5rem)_2.25rem] items-center gap-1.5 text-xs sm:grid-cols-[1rem_minmax(0,1fr)_minmax(2rem,4rem)_2.5rem]" key={row.rosterId}>
             <span className="text-center font-mono text-[0.65rem] text-muted-foreground">{index + 1}</span>
-            <span className={cn("truncate", row.isUser ? "font-semibold text-primary" : "text-muted-foreground")}>{row.manager}</span>
+            <div className="min-w-0">
+              <TeamLink className={cn("block truncate", row.isUser ? "font-semibold text-primary" : "text-muted-foreground")} leagueId={leagueId} rosterId={row.rosterId} username={username}>{row.name}</TeamLink>
+              <span className="block truncate text-[0.6rem] text-muted-foreground">{row.manager}</span>
+            </div>
             <span className="h-1.5 overflow-hidden rounded-full bg-muted" aria-hidden="true">
               <span className={cn("block h-full rounded-full", row.isUser ? style.highlight : style.bar)} style={{ width: `${Math.max(3, (row.value / max) * 100)}%` }} />
             </span>
@@ -86,7 +90,7 @@ export function PositionalScarcityCard({ data }: { data: OverviewData }) {
         <CardDescription>Who controls each position</CardDescription>
       </CardHeader>
       <CardContent className="grid gap-x-8 gap-y-8 sm:grid-cols-2 xl:grid-cols-4">
-        {data.positionScarcity.map((scarcity) => <ScarcityColumn key={scarcity.position} scarcity={scarcity} />)}
+        {data.positionScarcity.map((scarcity) => <ScarcityColumn key={scarcity.position} leagueId={data.league.id} scarcity={scarcity} username={data.username} />)}
       </CardContent>
     </Card>
   );

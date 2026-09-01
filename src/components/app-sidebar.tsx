@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/sidebar"
 import { useAccount } from "@/hooks/use-account"
 import type { LeagueChrome } from "@/lib/league-chrome"
-import { analyticsNav, mainNav, toolsNav, type NavEntry } from "@/lib/nav"
+import { mainNav, toolsNav, type NavEntry } from "@/lib/nav"
 import { leagueAvatarProxyUrl, withUsername } from "@/lib/utils"
 import { LockIcon } from "lucide-react"
 import { useSearchParams, useSelectedLayoutSegment } from "next/navigation"
@@ -67,7 +67,6 @@ export function AppSidebar({
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={toItems(mainNav)} />
-        <NavMain items={toItems(analyticsNav)} label="Analytics" />
         <NavProjects
           locked={
             league.isDynasty

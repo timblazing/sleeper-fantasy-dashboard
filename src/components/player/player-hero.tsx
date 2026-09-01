@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowUpRight, TrendingDown, TrendingUp } from "lucide-react";
 import { PositionBadge } from "@/components/position-badge";
+import { TeamLink } from "@/components/team-link";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
@@ -93,7 +94,7 @@ export function PlayerHero({ profile, context, leagueId, isSuperflex, username }
             <span className="text-[0.7rem] font-medium tracking-wide text-muted-foreground uppercase">In your league</span>
             {context.owner ? (
               <>
-                <span className="truncate text-sm font-medium">{context.owner.teamName}</span>
+                <TeamLink className="truncate text-sm font-medium" leagueId={leagueId} rosterId={context.owner.rosterId} username={username}>{context.owner.teamName}</TeamLink>
                 <span className="text-xs text-muted-foreground">{context.owner.isMine ? "Your team" : context.owner.manager}</span>
               </>
             ) : (

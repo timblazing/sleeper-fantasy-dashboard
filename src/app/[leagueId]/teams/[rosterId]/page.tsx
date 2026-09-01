@@ -24,8 +24,8 @@ export default async function TeamPage({ params, searchParams }: { params: Promi
   return (
     <div className="mx-auto flex w-full max-w-screen-2xl flex-col gap-4 p-4 md:p-6 lg:p-8">
       <div>
-        <Link className={buttonVariants({ variant: "ghost", size: "sm" })} href={withUsername(`/${leagueId}/standings`, username)}>
-          <ArrowLeft className="size-4" /> All teams
+        <Link className={buttonVariants({ variant: "ghost", size: "sm" })} href={withUsername(`/${leagueId}/league`, username)}>
+          <ArrowLeft className="size-4" /> Back to league
         </Link>
       </div>
       <TeamDetail

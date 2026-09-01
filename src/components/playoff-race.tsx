@@ -5,7 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { TeamLink } from "@/components/team-link";
 import type { PlayoffOutlook, PlayoffPicture, PlayoffRow } from "@/lib/playoff-odds";
 import { cn } from "@/lib/utils";
 
@@ -39,7 +39,7 @@ function TeamAvatar({ row, className }: { row: Pick<PlayoffRow, "avatar" | "name
  * The headline table: one row per team, sorted by playoff odds, with the playoff
  * cutline drawn between the last qualifying seed and the first team on the outside.
  */
-export function PlayoffRace({ picture }: { picture: PlayoffPicture }) {
+export function PlayoffRace({ leagueId, picture, username }: { leagueId: string; picture: PlayoffPicture; username?: string }) {
   const rows = useMemo(() => picture.rows.toSorted((a, b) => b.playoffOdds - a.playoffOdds), [picture.rows]);
   const max = Math.max(...rows.map((row) => row.playoffOdds), 1);
 
@@ -76,7 +76,7 @@ export function PlayoffRace({ picture }: { picture: PlayoffPicture }) {
                   <div className="flex min-w-0 items-center gap-2">
                     <TeamAvatar row={row} />
                     <div className="min-w-0">
-                      <p className={cn("break-words text-xs font-medium leading-tight sm:truncate sm:text-[0.8125rem]", row.isUser && "text-primary")}>{row.name}</p>
+                      <TeamLink className={cn("block break-words text-xs font-medium leading-tight sm:truncate sm:text-[0.8125rem]", row.isUser && "text-primary")} leagueId={leagueId} rosterId={row.rosterId} username={username}>{row.name}</TeamLink>
                       <p className="break-all text-[0.625rem] leading-tight text-muted-foreground sm:truncate sm:text-[0.6875rem]">
                         {row.manager}
                         {picture.started ? <span className="ml-1.5 font-mono tabular-nums">{row.wins}–{row.losses}{row.ties ? `–${row.ties}` : ""}</span> : null}
@@ -121,110 +121,6 @@ export function PlayoffRace({ picture }: { picture: PlayoffPicture }) {
             );
           })}
         </ol>
-      </CardContent>
-    </Card>
-  );
-}
-
-/**
- * Seed-by-seed probability grid. Reading across a row shows how a team's season is likely to
- * land; reading down a column shows who is competing for that seed.
- */
-export function SeedMatrix({ picture }: { picture: PlayoffPicture }) {
-  const rows = useMemo(() => picture.rows.toSorted((a, b) => a.averageSeed - b.averageSeed), [picture.rows]);
-  const seeds = Array.from({ length: picture.teams }, (_, index) => index + 1);
-
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Seed probability</CardTitle>
-        <CardDescription>Chance of finishing at each seed</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <TooltipProvider>
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-xl table-fixed border-separate border-spacing-0.5">
-              <colgroup>
-                <col className="w-[11rem]" />
-                {seeds.map((seed) => <col key={seed} />)}
-              </colgroup>
-              <thead>
-                <tr>
-                  <th className="sticky left-0 z-10 bg-card pr-2 text-left text-[0.625rem] font-medium uppercase tracking-wide text-muted-foreground">Team</th>
-                  {seeds.map((seed) => (
-                    <th
-                      key={seed}
-                      className={cn(
-                        "pb-1 text-center font-mono text-[0.625rem] font-medium tabular-nums",
-                        seed <= picture.playoffTeams ? "text-primary" : "text-muted-foreground",
-                      )}
-                    >
-                      {seed}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((row) => (
-                  <tr key={row.rosterId}>
-                    <th
-                      className={cn(
-                        "sticky left-0 z-10 max-w-[10rem] truncate bg-card pr-2 text-left text-[0.75rem] font-medium",
-                        row.isUser ? "text-primary" : "text-foreground",
-                      )}
-                      scope="row"
-                    >
-                      <span className="flex items-center gap-1.5">
-                        <TeamAvatar className="size-4" row={row} />
-                        <span className="truncate">{row.name}</span>
-                      </span>
-                    </th>
-                    {seeds.map((seed) => {
-                      const value = row.seedOdds[seed - 1] ?? 0;
-                      const inBracket = seed <= picture.playoffTeams;
-                      // Seed odds rarely exceed ~40% for one team, so the ramp saturates near
-                      // that rather than at 100 — otherwise the whole grid reads as pale.
-                      const intensity = Math.min(92, 10 + (value / 40) * 82);
-                      return (
-                        <td key={seed} className="p-0">
-                          <Tooltip>
-                            <TooltipTrigger
-                              className={cn(
-                                "flex h-7 w-full items-center justify-center rounded-[3px] font-mono text-[0.5625rem] font-medium tabular-nums transition-colors",
-                                value < 0.5
-                                  ? "text-muted-foreground/40"
-                                  // The mid range of the ramp is the tricky part: it is too dark
-                                  // for foreground text and too light for inverted text, so the
-                                  // flip happens late and the fill carries a matching border.
-                                  : intensity >= 70
-                                    ? inBracket ? "text-primary-foreground" : "text-background"
-                                    : "text-foreground",
-                              )}
-                              style={{
-                                // A single hue ramp per side of the cutline keeps the grid readable
-                                // without introducing a second colour scale.
-                                backgroundColor: value < 0.5
-                                  ? "var(--muted)"
-                                  : inBracket
-                                    ? `color-mix(in oklch, var(--primary) ${intensity}%, transparent)`
-                                    : `color-mix(in oklch, var(--muted-foreground) ${intensity}%, transparent)`,
-                              }}
-                            >
-                              {value >= 0.5 ? value.toFixed(0) : "·"}
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              {row.name} finishes seed {seed} in {pct(value)} of seasons
-                            </TooltipContent>
-                          </Tooltip>
-                        </td>
-                      );
-                    })}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </TooltipProvider>
       </CardContent>
     </Card>
   );

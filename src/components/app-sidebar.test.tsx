@@ -70,10 +70,11 @@ describe("AppSidebar", () => {
   it("renders the requested primary links in order without a section title", () => {
     const { container } = renderSidebar(league(true));
     const rendered = hrefs(container);
-    const primaryLinks = rendered.filter((href) => href === "/123" || href === "/123/players");
-    expect(primaryLinks).toEqual(["/123", "/123/players"]);
+    const primaryLinks = rendered.filter((href) => href === "/123" || href === "/123/league" || href === "/123/players" || href === "/123/draft");
+    expect(primaryLinks).toEqual(["/123", "/123/league", "/123/players", "/123/draft"]);
     expect(screen.getByText("Dashboard")).toBeInTheDocument();
-    expect(screen.queryByText("League")).not.toBeInTheDocument();
+    expect(screen.getByText("League")).toBeInTheDocument();
+    expect(screen.getByText("Draft")).toBeInTheDocument();
   });
 
   it("no longer offers the removed Weekly Report link", () => {
@@ -82,13 +83,18 @@ describe("AppSidebar", () => {
     expect(screen.queryByText("Weekly Report")).not.toBeInTheDocument();
   });
 
-  it("renders Analytics between the primary links and Tools", () => {
+  it("removes the old analytics and standings links", () => {
     const { container } = renderSidebar(league(true));
     const rendered = hrefs(container);
-    const analyticsLinks = rendered.filter((href) => href === "/123/power-rankings" || href === "/123/playoffs" || href === "/123/draft");
-    expect(analyticsLinks).toEqual(["/123/power-rankings", "/123/playoffs", "/123/draft"]);
-    expect(screen.getByText("Analytics")).toBeInTheDocument();
-    expect(screen.getByText("Playoffs")).toBeInTheDocument();
+    expect(rendered).not.toContain("/123/power-rankings");
+    expect(rendered).not.toContain("/123/standings");
+    expect(rendered).not.toContain("/123/playoffs");
+    expect(rendered).not.toContain("/123/history");
+    expect(screen.queryByText("Analytics")).not.toBeInTheDocument();
+    expect(screen.queryByText("Power Rankings")).not.toBeInTheDocument();
+    expect(screen.queryByText("Playoffs")).not.toBeInTheDocument();
+    expect(screen.queryByText("League History")).not.toBeInTheDocument();
+    expect(screen.queryByText("Standings")).not.toBeInTheDocument();
     expect(rendered.indexOf("/123/draft")).toBeLessThan(rendered.indexOf("/123/trade"));
     expect(screen.getByText("Tools")).toBeInTheDocument();
   });
@@ -124,7 +130,6 @@ describe("AppSidebar", () => {
   });
 
   // Rankings was folded into Players, so its own nav entry is gone for every format.
-  // "Power Rankings" still renders in Analytics, hence the exact-text queries here.
   it("no longer offers the removed Rankings link", () => {
     for (const isDynasty of [true, false]) {
       const { container, unmount } = renderSidebar(league(isDynasty));
@@ -154,7 +159,7 @@ describe("AppSidebar", () => {
       const rendered = hrefs(container).filter((href): href is string => href !== null && href.startsWith("/123"));
       expect(rendered.length).toBeGreaterThan(0);
       for (const href of rendered) expect(href).toContain("?username=tim%20blazing");
-      expect(rendered).toContain("/123/power-rankings?username=tim%20blazing");
+      expect(rendered).toContain("/123/league?username=tim%20blazing");
     } finally {
       searchParams.delete("username");
     }

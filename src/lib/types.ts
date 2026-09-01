@@ -23,6 +23,7 @@ export type ActivityItem = {
   time: string;
   kind: "trade" | "add" | "drop";
   team: string | null;
+  teams: { rosterId: number; name: string }[];
   adds: NflPlayer[];
   drops: NflPlayer[];
   bid: number | null;
@@ -31,8 +32,6 @@ export type ActivityItem = {
 export type LeagueOption = { id: string; name: string; season: string; status: string; type: string; isDynasty: boolean; avatar: string | null };
 export type LeagueDivision = { id: number; name: string };
 export type SleeperAccount = { userId: string; username: string; displayName: string; avatar: string | null; leagues: LeagueOption[] };
-export type DashboardData = { league: { id: string; name: string; season: string; teams: number; type: string; isDynasty: boolean; superflex: boolean; divisions: LeagueDivision[] }; state: { week: number; matchupWeek: number; seasonType: string }; standings: StandingRow[]; matchups: MatchupPair[]; featuredMatchup?: MatchupPair; activity: ActivityItem[]; account?: SleeperAccount; myRosterId?: number };
-
 export type NflPlayer = { id: string; name: string; position: string | null; team: string | null; age: number | null; yearsExp: number | null; injuryStatus: string | null; injuryBodyPart: string | null; practiceParticipation: string | null; number: number | null; espnId: number | null; searchRank: number | null; depthChartOrder: number | null; status: string | null };
 export type RosterSlot = { slot: string; player: NflPlayer | null; points: number | null; projection: number | null; projectionOpponent: string | null; projectionHome: boolean | null; game: PlayerGame | null };
 export type RosterGroup = { label: string; slots: RosterSlot[] };
