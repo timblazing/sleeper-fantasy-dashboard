@@ -43,9 +43,7 @@ export default async function LeaguePage({ params, searchParams }: { params: Pro
     <PageContainer className="flex flex-col gap-6">
       <PageHeader description={`${overview.league.name} at a glance — activity, scarcity, the playoff race, and the league record book.`} title="League" />
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1.5fr)_minmax(22rem,1fr)] lg:items-start">
-        <PlayoffRace leagueId={leagueId} picture={picture} username={username} />
-      </div>
+      <PlayoffRace leagueId={leagueId} picture={picture} username={username} />
       <SeasonTimelineCard timeline={overview.timeline} />
       <PositionalScarcityCard data={overview} />
 
