@@ -15,6 +15,7 @@ import type { MarketPlayer } from "@/lib/player-market";
 import type { RaTrade, TradeAssetInput } from "@/lib/roster-audit";
 import type { PickOption, TradeLabData, TradePlayer } from "@/lib/trade-lab";
 import { cn } from "@/lib/utils";
+import { basisMeta, sumValues } from "@/lib/value-basis";
 
 /** One asset staged on a side. `key` is what the UI dedupes and removes by. */
 type StagedAsset = { key: string; name: string; detail: string; position?: string | null; imageUrl?: string; value: number; input: TradeAssetInput };
@@ -106,6 +107,8 @@ function Side({ data, title, description, teamId, onTeamChange, assets, onAdd, o
   const trimmed = query.trim();
   const roster = teamId === ANY_TEAM ? null : data.teams.find((team) => String(team.rosterId) === teamId) ?? null;
   const staged = new Set(assets.map((asset) => asset.key));
+  // A redraft league has no tradeable picks, so every "or picks" prompt would be a dead end.
+  const hasPicks = data.picks.length > 0;
 
   // Roster mode filters a list we already hold; hypothetical mode has to ask the server,
   // which is also the only path that can reach players nobody in the league rosters.
@@ -132,7 +135,7 @@ function Side({ data, title, description, teamId, onTeamChange, assets, onAdd, o
     : trimmed ? remote.map((entry) => playerAsset(entry.player, entry.value)) : [];
   const pickSuggestions = data.picks.filter((pick) => !trimmed || pick.label.toLowerCase().includes(trimmed.toLowerCase())).map(pickAsset);
   const suggestions = [...playerSuggestions, ...(trimmed ? pickSuggestions : pickSuggestions.slice(0, 3))].filter((asset) => !staged.has(asset.key)).slice(0, SUGGESTION_LIMIT);
-  const total = assets.reduce((sum, asset) => sum + asset.value, 0);
+  const total = sumValues(assets.map((asset) => asset.value));
 
   return <Card className="flex flex-col">
     <CardHeader>
@@ -144,28 +147,28 @@ function Side({ data, title, description, teamId, onTeamChange, assets, onAdd, o
       <div className="overflow-hidden rounded-xl border">
         {assets.length
           ? <div className="divide-y">{assets.map((asset) => <StagedRow asset={asset} key={asset.key} onRemove={() => onRemove(asset.key)} />)}</div>
-          : <p className="px-4 py-6 text-center text-sm text-muted-foreground">No assets yet. Add players or picks below.</p>}
+          : <p className="px-4 py-6 text-center text-sm text-muted-foreground">{hasPicks ? "No assets yet. Add players or picks below." : "No players yet. Add one below."}</p>}
         {assets.length ? <div className="flex items-center justify-between border-t bg-muted/30 px-4 py-2 text-sm">
-          <span className="text-muted-foreground">Market value</span>
+          <span className="text-muted-foreground">{basisMeta(data.league.basis).hasMarket ? "Market value" : "Points above replacement"}</span>
           <span className="font-mono font-medium tabular-nums">{formatter.format(total)}</span>
         </div> : null}
       </div>
 
       <div className="relative">
         <SearchIcon aria-hidden="true" className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
-        <Input aria-label={`Add an asset to ${title}`} className="h-10 pl-8" onChange={(event) => { const value = event.target.value; setQuery(value); setIsSearching(!roster && Boolean(value.trim())); }} placeholder={roster ? `Search ${roster.name} and picks...` : "Search any player or pick..."} type="search" value={query} />
+        <Input aria-label={`Add an asset to ${title}`} className="h-10 pl-8" onChange={(event) => { const value = event.target.value; setQuery(value); setIsSearching(!roster && Boolean(value.trim())); }} placeholder={roster ? `Search ${roster.name}${hasPicks ? " and picks" : ""}...` : hasPicks ? "Search any player or pick..." : "Search any player..."} type="search" value={query} />
       </div>
 
       <div aria-busy={isSearching} className="overflow-hidden rounded-xl border">
         {suggestions.length
           ? <div className="divide-y">{suggestions.map((asset) => <SuggestionRow asset={asset} key={asset.key} onAdd={() => { onAdd(asset); setQuery(""); }} />)}</div>
-          : <p className="px-4 py-6 text-center text-sm text-muted-foreground">{isSearching ? "Searching..." : trimmed ? "No players or picks matched." : "Start typing to find a player."}</p>}
+          : <p className="px-4 py-6 text-center text-sm text-muted-foreground">{isSearching ? "Searching..." : trimmed ? (hasPicks ? "No players or picks matched." : "No players matched.") : "Start typing to find a player."}</p>}
       </div>
     </CardContent>
   </Card>;
 }
 
-function Verdict({ trade }: { trade: RaTrade }) {
+function Verdict({ basis, trade }: { basis: TradeLabData["league"]["basis"]; trade: RaTrade }) {
   const winnerLabel = trade.verdict.winner === null ? "Even trade" : trade.verdict.winner === "sideA" ? "You win this trade" : "Your partner wins this trade";
   const total = trade.sideA.value + trade.sideB.value;
   const sharePercent = total ? Math.round((trade.sideA.value / total) * 100) : 50;
@@ -173,7 +176,7 @@ function Verdict({ trade }: { trade: RaTrade }) {
   return <Card>
     <CardHeader>
       <div className="flex flex-wrap items-start justify-between gap-3">
-        <div><CardTitle>{winnerLabel}</CardTitle><CardDescription>{trade.verdict.difference ? `${formatter.format(trade.verdict.difference)} value gap` : "Both sides carry the same market value"}</CardDescription></div>
+        <div><CardTitle>{winnerLabel}</CardTitle><CardDescription>{trade.verdict.difference ? `${formatter.format(trade.verdict.difference)} ${basisMeta(basis).hasMarket ? "value" : "PPG"} gap` : `Both sides carry the same ${basisMeta(basis).hasMarket ? "market value" : "projected production"}`}</CardDescription></div>
         <Badge className={cn("text-base", gradeTone(trade.verdict.grade))} variant="outline">{trade.verdict.grade}</Badge>
       </div>
     </CardHeader>
@@ -205,6 +208,10 @@ function Verdict({ trade }: { trade: RaTrade }) {
 }
 
 export function TradeCalculator({ data }: { data: TradeLabData }) {
+  // Dynasty deals are graded on market value at RosterAudit; redraft deals are graded here on the
+  // starting points each side gains. The page says which, so a verdict is never read in the wrong
+  // currency, and the redraft board carries no picks to stage.
+  const dynasty = data.league.basis === "dynasty";
   const myTeam = data.teams.find((team) => team.rosterId === data.myRosterId);
   const partnerDefault = data.teams.find((team) => team.rosterId !== data.myRosterId);
   const [receiveTeam, setReceiveTeam] = React.useState(partnerDefault ? String(partnerDefault.rosterId) : ANY_TEAM);
@@ -269,11 +276,11 @@ export function TradeCalculator({ data }: { data: TradeLabData }) {
   }, [data.league.id, ready, receive, send]);
 
   return <div className="mx-auto flex w-full max-w-screen-2xl flex-col gap-6 p-4 md:p-6 lg:p-8">
-    <PageHeader description="Stage both sides of a deal and grade it against live market values." title="Trade Calculator" />
+    <PageHeader description={dynasty ? "Stage both sides of a deal and grade it against live market values." : "Stage both sides of a deal and grade it on the starting points each side gains."} title="Trade Calculator" />
 
-    {!data.valuesReady ? <Card><CardContent className="py-4 text-sm text-muted-foreground">Live market values are unavailable right now, so staged assets may show no value. The graded result still comes from RosterAudit.</CardContent></Card> : null}
+    {!data.valuesReady ? <Card><CardContent className="py-4 text-sm text-muted-foreground">{dynasty ? "Live market values are unavailable right now, so staged assets may show no value. The graded result still comes from RosterAudit." : "Projections are unavailable right now, so staged players may show no value and the verdict will read as an even trade."}</CardContent></Card> : null}
 
-    {hasAssets && trade ? <Verdict trade={trade} /> : null}
+    {hasAssets && trade ? <Verdict basis={data.league.basis} trade={trade} /> : null}
 
     <div className="grid gap-4 lg:grid-cols-2">
       <Side assets={receive} data={data} description="Assets coming to your roster" onAdd={add(setReceive)} onRemove={remove(setReceive)} onTeamChange={setReceiveTeam} teamId={receiveTeam} title="You receive" />

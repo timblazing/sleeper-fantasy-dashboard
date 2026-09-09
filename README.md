@@ -1,5 +1,5 @@
 <p align="center">
-  <img alt="Sleeper Fantasy Dashboard" src="https://shieldcn.dev/header/surface.svg?title=Sleeper+Fantasy+Dashboard&amp;subtitle=Tools+and+insights+for+Sleeper+Dynasty+leagues&amp;mode=dark&amp;image=https%3A%2F%2Fi.imgur.com%2FGl1TnAp.png&amp;overlay=.8" />
+  <img alt="Sleeper Fantasy Dashboard" src="https://shieldcn.dev/header/surface.svg?title=Sleeper+Fantasy+Dashboard&amp;subtitle=Tools+and+insights+for+Sleeper+fantasy+leagues&amp;mode=dark&amp;image=https%3A%2F%2Fi.imgur.com%2FGl1TnAp.png&amp;overlay=.8" />
 </p>
 
 <p align="center">
@@ -22,13 +22,14 @@
 
 - Live matchups, standings, power rankings, playoff odds, and league history
 - Player rankings, profiles, projections, injuries, and scouting reports
-- Dynasty trade analysis powered by RosterAudit
+- Trade analysis powered by RosterAudit
+- Dynasty, keeper, and redraft leagues — dynasty pages are priced on the dynasty market, everything else on projected points above replacement
 - Username-based league discovery with no manual league IDs
 
 ## Data sources
 
 - [Sleeper API](https://docs.sleeper.com/) for players, leagues, rosters, and matchups
-- [RosterAudit](https://rosteraudit.com/developers/) for dynasty player values and trade analysis
+- [RosterAudit](https://rosteraudit.com/developers/) for dynasty player values, projections, and trade analysis
 
 ## References
 

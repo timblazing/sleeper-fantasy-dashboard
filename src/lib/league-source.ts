@@ -1,7 +1,7 @@
 import { getWeekGamesByTeam, getWeekHomeAwayByTeam } from "@/lib/espn";
 import { getPlayerCatalog } from "@/lib/players";
 import { getWeeklyProjections } from "@/lib/projections";
-import { getPickCurve, getValues } from "@/lib/roster-audit";
+import { getPickCurve, getProjectedPpg, getValues } from "@/lib/roster-audit";
 import { getDraftPicks, getDraftTradedPicks, getLeague, getLeagueDrafts, getLeagueRosters, getLeagueUsers, getLosersBracket, getMatchups, getNflLeaguesForUsername, getNflState, getTransactions, getWinnersBracket } from "@/lib/sleeper";
 
 /**
@@ -27,6 +27,8 @@ export type LeagueSource = {
   getLosersBracket: typeof getLosersBracket;
   getPlayerCatalog: typeof getPlayerCatalog;
   getValues: typeof getValues;
+  /** The redraft leagues' value source: projected points per game for the whole board. */
+  getProjectedPpg: typeof getProjectedPpg;
   /** The pick-number → value curve Draft Grades benchmarks each selection against. */
   getPickCurve: typeof getPickCurve;
   getNflLeaguesForUsername: typeof getNflLeaguesForUsername;
@@ -42,7 +44,7 @@ export type LeagueSource = {
 /** The production wiring. Page-data entry points default to this, so `src/app/**` passes nothing. */
 export const liveSource: LeagueSource = {
   getLeague, getNflState, getLeagueUsers, getLeagueRosters, getMatchups, getTransactions,
-  getLeagueDrafts, getDraftPicks, getDraftTradedPicks, getPlayerCatalog, getValues, getPickCurve, getNflLeaguesForUsername,
+  getLeagueDrafts, getDraftPicks, getDraftTradedPicks, getPlayerCatalog, getValues, getProjectedPpg, getPickCurve, getNflLeaguesForUsername,
   getWinnersBracket, getLosersBracket,
   getWeekGamesByTeam, getWeekHomeAwayByTeam, getWeeklyProjections,
 };

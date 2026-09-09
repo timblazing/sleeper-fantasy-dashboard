@@ -58,3 +58,55 @@ describe("matchupWeek", () => {
     expect(await week("off")).toBe(1);
   });
 });
+
+describe("loadValueMap", () => {
+  const projections = (rows: { sleeperId: string; position: string; ppg: number }[]) => async () => ({
+    ok: true as const,
+    attribution: { text: "RosterAudit", url: "https://rosteraudit.com" },
+    data: rows.map((row) => ({ ...row, name: row.sleeperId, team: null, age: null })),
+  });
+
+  it("prices a dynasty league off the market board and never touches the projections", async () => {
+    let projectionsRead = false;
+    const { source } = makeTwelveTeamLeague({
+      source: { getProjectedPpg: async () => { projectionsRead = true; throw new Error("must not be read"); } },
+    });
+    const context = await getLeagueValueContext("L1", source);
+    expect(context.basis).toBe("dynasty");
+    // The fixture's 1QB market value for roster 1's first player.
+    expect(context.values.get("p11")).toBe(890);
+    expect(projectionsRead).toBe(false);
+  });
+
+  // The regression the redraft basis exists to prevent: a redraft league reading dynasty values.
+  it("prices a redraft league off the projection board and never touches the market values", async () => {
+    let marketRead = false;
+    const { source } = makeTwelveTeamLeague({
+      league: { roster_positions: ["QB", "RB", "WR"], settings: { type: 0, num_teams: 12 } },
+      source: {
+        getValues: async () => { marketRead = true; throw new Error("must not be read"); },
+        getProjectedPpg: projections([
+          { sleeperId: "p11", position: "QB", ppg: 24 },
+          ...Array.from({ length: 12 }, (_, index) => ({ sleeperId: `qb${index}`, position: "QB", ppg: 20 - index })),
+        ]),
+      },
+    });
+    const context = await getLeagueValueContext("L1", source);
+    expect(context.basis).toBe("redraft");
+    // 12 teams × 1 starting QB, so the 12th-best quarterback on the board (10 ppg) is
+    // replacement level, and the 24 ppg starter is worth the 14 points he clears it by.
+    expect(context.values.get("p11")).toBe(14);
+    expect(context.values.get("p12")).toBeUndefined();
+    expect(marketRead).toBe(false);
+  });
+
+  it("degrades to no values when the projection board is unavailable", async () => {
+    const { source } = makeTwelveTeamLeague({
+      league: { settings: { type: 0, num_teams: 12 } },
+      source: { getProjectedPpg: async () => ({ ok: false, error: { kind: "upstream-unavailable", message: "down", retryable: true } }) },
+    });
+    const context = await getLeagueValueContext("L1", source);
+    expect(context.valuesReady).toBe(false);
+    expect(context.teams.every((team) => team.value === 0)).toBe(true);
+  });
+});

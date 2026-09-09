@@ -1,7 +1,7 @@
 import { raFetch } from "@/lib/roster-audit/client";
 import { h2hResponseSchema, leagueManagersResponseSchema, managerCareerResponseSchema, moversResponseSchema, tradeResponseSchema, picksResponseSchema, ppgRankingsResponseSchema, presetsResponseSchema, playerSearchResponseSchema, playerStatsResponseSchema, rankingsResponseSchema, valuesResponseSchema } from "@/lib/roster-audit/schemas";
 import type { RankingsPlayerRow, TradeResponse } from "@/lib/roster-audit/schemas";
-import type { RaH2h, RaManagerCareer, RaManagerDossier, RaMovers, RaPaged, RaPick, RaPickCurve, RaPlayerValue, RaPreset, RaResult, RaTrade, RaTradeAsset, RaTradeSide, TradeAssetInput } from "@/lib/roster-audit/types";
+import type { RaH2h, RaManagerCareer, RaManagerDossier, RaMovers, RaPaged, RaPick, RaPickCurve, RaPlayerValue, RaPreset, RaProjectedPlayer, RaResult, RaTrade, RaTradeAsset, RaTradeSide, TradeAssetInput } from "@/lib/roster-audit/types";
 
 export type RankingsParams = { preset: string; position?: string; perPage?: number; page?: number; sort?: string; minAge?: number; maxAge?: number; leagueSize?: number; search?: string };
 
@@ -76,12 +76,17 @@ export const searchPlayers = (params: { q?: string; position?: string; limit?: n
 
 export const getPlayerStats = (sleeperId: string) => raFetch(`/player-stats/${sleeperId}`, playerStatsResponseSchema, { ttl: 21600 });
 
-export const getPpgRankings = (params?: { position?: string }) => {
-  const query = new URLSearchParams();
-  if (params?.position) query.set("position", params.position);
-  const qs = query.toString();
-  return raFetch(`/projections/ppg-rankings${qs ? `?${qs}` : ""}`, ppgRankingsResponseSchema, { ttl: 21600 });
-};
+/**
+ * The projected points-per-game board — the whole board, deliberately unfiltered by position.
+ *
+ * This is the redraft leagues' value source. Replacement level is a league-wide comparison
+ * across every position at once (`src/lib/redraft-values.ts`), so asking for one position at a
+ * time would make the numbers incomparable. Dynasty columns ride along on the same payload and
+ * are dropped here: a redraft league must never see them.
+ */
+export const getProjectedPpg = (): Promise<RaResult<RaProjectedPlayer[]>> =>
+  mapResult(raFetch("/projections/ppg-rankings", ppgRankingsResponseSchema, { ttl: 21600 }), (data) =>
+    data.rankings.map((row) => ({ sleeperId: row.sleeper_id, name: row.name, position: row.position, team: row.team, age: row.age, ppg: row.ppg })));
 
 export type TradeSettings = { isSuperflex: boolean; isTePremium: boolean; leagueSize?: number; scoringFormat?: string };
 

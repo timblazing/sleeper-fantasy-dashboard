@@ -8,12 +8,10 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar"
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import Link from "next/link"
 
 export function NavProjects({
   projects,
-  locked,
 }: {
   projects: {
     title: string
@@ -21,11 +19,6 @@ export function NavProjects({
     icon?: React.ReactNode
     isActive?: boolean
   }[]
-  locked?: {
-    title: string
-    reason: string
-    icon?: React.ReactNode
-  }
 }) {
   const { isMobile, setOpenMobile } = useSidebar()
 
@@ -48,19 +41,6 @@ export function NavProjects({
             </SidebarMenuButton>
           </SidebarMenuItem>
         ))}
-        {locked ? (
-          <SidebarMenuItem>
-            <Tooltip>
-              <TooltipTrigger render={<SidebarMenuButton aria-disabled="true" />}>
-                {locked.icon}
-                <span>{locked.title}</span>
-              </TooltipTrigger>
-              <TooltipContent align="center" side="right">
-                {locked.reason}
-              </TooltipContent>
-            </Tooltip>
-          </SidebarMenuItem>
-        ) : null}
       </SidebarMenu>
     </SidebarGroup>
   )

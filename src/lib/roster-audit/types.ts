@@ -1,6 +1,8 @@
 export type Attribution = { text: string; url: string };
 export type RaPreset = { key: string; label: string; formatKey: string; isSuperflex: boolean; isTep: boolean; scoringFormat: string; leagueSize: number; reliable: boolean };
 export type RaPlayerValue = { sleeperId: string; name: string; position: string; team: string | null; age: number | null; tier: number | null; value: number; valueSf: number | null; value1qb: number | null; rankOverall: number | null; rankPosition: number | null; trend7d: number; trend30d: number; photoUrl: string | null; yearsExp: number | null };
+/** One row of the projected points-per-game board — the redraft leagues' value source. */
+export type RaProjectedPlayer = { sleeperId: string; name: string; position: string; team: string | null; age: number | null; ppg: number };
 export type RaPick = { id: number; season: number; round: number; slot: "early" | "mid" | "late"; label: string; valueSf: number; value1qb: number; sortOrder: number };
 /**
  * What a rookie pick is worth *by its overall draft slot* — pick 1 through 60, keyed by pick number.

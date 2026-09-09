@@ -18,7 +18,7 @@ beforeAll(() => {
   vi.stubGlobal("fetch", vi.fn(() => Promise.resolve({ ok: false } as Response)));
 });
 
-const league = (isDynasty: boolean): LeagueChrome => ({ id: "123", name: "Test League", season: "2026", type: isDynasty ? "Dynasty" : "Redraft", isDynasty, isSuperflex: true, avatar: null, matchupWeek: 4 });
+const league = (isDynasty: boolean): LeagueChrome => ({ id: "123", name: "Test League", season: "2026", type: isDynasty ? "Dynasty" : "Redraft", isDynasty, basis: isDynasty ? "dynasty" : "redraft", isSuperflex: true, avatar: null, matchupWeek: 4 });
 
 const hrefs = (container: HTMLElement) => [...container.querySelectorAll("a")].map((anchor) => anchor.getAttribute("href"));
 
@@ -27,7 +27,7 @@ function renderSidebar(chrome: LeagueChrome) {
 }
 
 describe("AppSidebar", () => {
-  it("renders the dynasty tool links for a dynasty league", () => {
+  it("renders every tool link for a dynasty league", () => {
     const { container } = renderSidebar(league(true));
     const rendered = hrefs(container);
     expect(rendered).toEqual(expect.arrayContaining(["/123/trade", "/123/injuries"]));
@@ -42,11 +42,13 @@ describe("AppSidebar", () => {
     expect(screen.queryByText("Insights")).not.toBeInTheDocument();
   });
 
-  it("hides the dynasty tool links for a non-dynasty league and explains why", () => {
+  // The Trade Calculator used to be locked behind a dynasty league. It now grades a redraft deal
+  // on the starting points each side gains, so nothing in Tools is withheld by format any more.
+  it("keeps the trade calculator in Tools for a redraft league, unlocked", () => {
     const { container } = renderSidebar(league(false));
-    const rendered = hrefs(container);
-    expect(rendered).not.toContain("/123/trade");
-    expect(screen.getByText("Dynasty tools unavailable")).toBeInTheDocument();
+    expect(hrefs(container)).toContain("/123/trade");
+    expect(screen.getByText("Trade Calculator")).toBeInTheDocument();
+    expect(screen.queryByText("Dynasty tools unavailable")).not.toBeInTheDocument();
   });
 
   it("keeps the injury report in Tools for every league format", () => {

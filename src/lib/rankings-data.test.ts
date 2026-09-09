@@ -7,6 +7,7 @@ const getPresets = vi.fn();
 const getRankings = vi.fn();
 const getPicks = vi.fn();
 const getMovers = vi.fn();
+const getProjectedPpg = vi.fn();
 const getLeague = vi.fn();
 const getLeagueRosters = vi.fn();
 const getLeagueUsers = vi.fn();
@@ -14,7 +15,7 @@ const getNflLeaguesForUsername = vi.fn();
 
 vi.mock("@/lib/roster-audit", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/lib/roster-audit")>();
-  return { ...actual, getPresets, getRankings, getPicks, getMovers };
+  return { ...actual, getPresets, getRankings, getPicks, getMovers, getProjectedPpg };
 });
 
 vi.mock("@/lib/sleeper", () => ({ getLeague, getLeagueRosters, getLeagueUsers, getNflLeaguesForUsername }));
@@ -221,5 +222,63 @@ describe("getRankingsView movers and errors", () => {
     // The format is derived from the league, not chosen: a superflex league gets the
     // superflex preset and there is no user-facing control that could override it.
     expect(result.view.presetKey).toBe("sf-ppr");
+  });
+});
+
+describe("getRankingsView for a redraft league", () => {
+  const REDRAFT_LEAGUE: SleeperLeague = { ...ONE_QB_LEAGUE, settings: { num_teams: 2, type: 0 }, roster_positions: ["QB", "RB"] };
+
+  /** Two teams starting one RB each, so the second-best back is replacement level. */
+  const BOARD = [
+    { sleeperId: "rb1", name: "Alpha Back", position: "RB", team: "ATL", age: 24, ppg: 20 },
+    { sleeperId: "rb2", name: "Beta Back", position: "RB", team: "BUF", age: 28, ppg: 14 },
+    { sleeperId: "rb3", name: "Gamma Back", position: "RB", team: "CHI", age: 22, ppg: 11 },
+    { sleeperId: "qb1", name: "Alpha Arm", position: "QB", team: "DEN", age: 30, ppg: 25 },
+    { sleeperId: "qb2", name: "Beta Arm", position: "QB", team: "GB", age: 26, ppg: 19 },
+  ];
+
+  beforeEach(() => {
+    getLeague.mockResolvedValue(REDRAFT_LEAGUE);
+    getProjectedPpg.mockResolvedValue(ok(BOARD));
+  });
+
+  it("ranks on points above replacement and never touches the dynasty board", async () => {
+    const result = await getRankingsView("L1", QUERY);
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.view.basis).toBe("redraft");
+    // QB replacement is the 2nd arm (19) and RB replacement the 2nd back (14), so the top back
+    // clears his bar by more than the top quarterback clears his — the reverse of raw PPG.
+    expect(result.view.rows.map((row) => (row.kind === "player" ? [row.name, row.value] : null))).toEqual([
+      ["Alpha Arm", 6], ["Alpha Back", 6], ["Beta Arm", 0], ["Beta Back", 0], ["Gamma Back", 0],
+    ]);
+    expect(getRankings).not.toHaveBeenCalled();
+    expect(getPresets).not.toHaveBeenCalled();
+  });
+
+  it("filters by position and search against the same board", async () => {
+    const byPosition = await getRankingsView("L1", { ...QUERY, position: "RB" });
+    expect(byPosition.ok && byPosition.view.rows.every((row) => row.kind === "player" && row.position === "RB")).toBe(true);
+
+    const bySearch = await getRankingsView("L1", { ...QUERY, search: "gamma" });
+    expect(bySearch.ok && bySearch.view.rows.map((row) => (row.kind === "player" ? row.name : null))).toEqual(["Gamma Back"]);
+  });
+
+  // Picks and rookies have no meaning on a projection board, so those URLs fall back to the
+  // full list rather than rendering an empty page.
+  it("collapses the picks and rookies filters to the whole board", async () => {
+    for (const position of ["picks", "rookies"] as const) {
+      const result = await getRankingsView("L1", { ...QUERY, position });
+      expect(result.ok && result.view.rows).toHaveLength(BOARD.length);
+    }
+    expect(getPicks).not.toHaveBeenCalled();
+  });
+
+  it("surfaces an upstream failure instead of an empty board", async () => {
+    getProjectedPpg.mockResolvedValue({ ok: false, error: { kind: "upstream-unavailable", message: "down", retryable: true } });
+    const result = await getRankingsView("L1", QUERY);
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.error.kind).toBe("upstream-unavailable");
   });
 });

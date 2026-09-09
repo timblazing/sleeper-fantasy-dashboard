@@ -1,4 +1,5 @@
 import type { SleeperLeague } from "@/lib/types";
+import type { ValueBasis } from "@/lib/value-basis";
 
 // Sleeper encodes the league format in `settings.type`: 0 = redraft, 1 = keeper, 2 = dynasty.
 // Anything else (including a missing value) fails closed: not dynasty, described as "Redraft".
@@ -15,10 +16,21 @@ export type LeagueFormat = {
   isDynasty: boolean;
   /** "Redraft" | "Keeper" | "Dynasty" */
   typeLabel: string;
+  /** Which currency this league's numbers are quoted in. See `src/lib/value-basis.ts`. */
+  basis: ValueBasis;
 };
 
 export function isDynastyLeague(league: SleeperLeague): boolean {
   return league.settings?.type === 2;
+}
+
+/**
+ * Dynasty values only describe a league that carries rosters across seasons. Everything else —
+ * redraft, keeper, and a league whose type Sleeper did not report — is priced on this season's
+ * projected production instead, which is the same fail-closed rule `describeLeagueType` follows.
+ */
+export function valueBasisFor(league: SleeperLeague): ValueBasis {
+  return isDynastyLeague(league) ? "dynasty" : "redraft";
 }
 
 export function describeLeagueType(league: SleeperLeague): string {
@@ -39,5 +51,5 @@ export function deriveLeagueFormat(league: SleeperLeague): LeagueFormat {
   const superflex = isSuperflexLeague(league);
   const tePremium = (league.scoring_settings.bonus_rec_te ?? 0) > 0;
   const presetKey = `${superflex ? "sf" : "1qb"}-ppr${tePremium ? "-tep" : ""}`;
-  return { presetKey, formatKey: presetKey.replace(/-/g, "_"), superflex, tePremium, isDynasty: isDynastyLeague(league), typeLabel: describeLeagueType(league) };
+  return { presetKey, formatKey: presetKey.replace(/-/g, "_"), superflex, tePremium, isDynasty: isDynastyLeague(league), typeLabel: describeLeagueType(league), basis: valueBasisFor(league) };
 }

@@ -4,7 +4,8 @@ import { RankingsSearch } from "@/components/rankings-search";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ButtonGroup } from "@/components/ui/button-group";
-import { describeAgeRange, rankingsHref, RANKINGS_POSITIONS, type RankingsQuery } from "@/lib/rankings-query";
+import { describeAgeRange, rankingsHref, rankingsPositionsFor, type RankingsQuery } from "@/lib/rankings-query";
+import type { ValueBasis } from "@/lib/value-basis";
 
 const positionLabel = (position: string) => (position === "all" ? "All" : position === "picks" ? "Picks" : position === "rookies" ? "Rookies" : position);
 
@@ -14,13 +15,14 @@ const positionLabel = (position: string) => (position === "all" ? "All" : positi
  *  One row, two clusters: position is the filter people reach for constantly so it stays
  *  segmented and always visible; search is typed rarely but needs its own box. An age range
  *  arriving in the URL still applies and shows as a removable badge below. */
-export function RankingsToolbar({ leagueId, query }: { leagueId: string; query: RankingsQuery }) {
+export function RankingsToolbar({ basis, leagueId, query }: { basis: ValueBasis; leagueId: string; query: RankingsQuery }) {
   const ageLabel = describeAgeRange(query);
+  const positions = rankingsPositionsFor(basis);
   return (
     <div className="flex flex-col gap-3">
       <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
         <ButtonGroup aria-label="Position">
-          {RANKINGS_POSITIONS.map((position) => (
+          {positions.map((position) => (
             <Button key={position} nativeButton={false} size="sm" variant={query.position === position ? "default" : "outline"} aria-current={query.position === position ? "page" : undefined} render={<Link href={rankingsHref(leagueId, query, { position })} />}>
               {positionLabel(position)}
             </Button>

@@ -1,12 +1,16 @@
+import type { LeagueFormat } from "@/lib/league-features";
 import { getLeagueBase, teamIdentity, type LeagueBase } from "@/lib/league-context";
 import { liveSource, type LeagueSource } from "@/lib/league-source";
 import { resolvePlayer } from "@/lib/players";
+import { toRedraftValues } from "@/lib/redraft-values";
+import { ROOM_POSITIONS, type RoomPosition } from "@/lib/roster-positions";
+import type { Attribution } from "@/lib/roster-audit";
 import type { NflPlayer, NflState, SleeperLeague, SleeperRoster } from "@/lib/types";
 import { points } from "@/lib/utils";
+import { sumValues, type ValueBasis } from "@/lib/value-basis";
 
-/** Positions that get their own "room" on the overview; anything else is folded into `other`. */
-export const ROOM_POSITIONS = ["QB", "RB", "WR", "TE"] as const;
-export type RoomPosition = (typeof ROOM_POSITIONS)[number];
+export { ROOM_POSITIONS };
+export type { RoomPosition };
 
 export type ValuedPlayer = {
   player: NflPlayer;
@@ -65,9 +69,11 @@ export type LeagueValueContext = {
   regularSeason: boolean;
   superflex: boolean;
   formatKey: string;
+  /** Which currency `values` is quoted in — dynasty market value, or points above replacement. */
+  basis: ValueBasis;
   catalog: Map<string, NflPlayer>;
   catalogReady: boolean;
-  /** Player value in this league's format. Empty when RosterAudit is unreachable. */
+  /** Player value in this league's format and basis. Empty when RosterAudit is unreachable. */
   values: Map<string, number>;
   valuesReady: boolean;
   rankOverall: Map<string, number>;
@@ -89,7 +95,7 @@ function rankByValue(entries: [string, number][]): Map<string, number> {
 function buildRooms(roster: ValuedPlayer[], leagueRooms: Map<string, number[]>): PositionRoom[] {
   return ROOM_POSITIONS.map((position) => {
     const held = roster.filter((entry) => entry.player.position === position);
-    const value = held.reduce((sum, entry) => sum + entry.value, 0);
+    const value = sumValues(held.map((entry) => entry.value));
     const all = leagueRooms.get(position) ?? [];
     return {
       position,
@@ -100,6 +106,36 @@ function buildRooms(roster: ValuedPlayer[], leagueRooms: Map<string, number[]>):
       leagueAvg: avg(all) ?? 0,
     };
   });
+}
+
+/**
+ * The one place a player's worth is read, for either basis.
+ *
+ * Dynasty leagues take RosterAudit's market values in the league's own superflex/TE-premium
+ * format. Every other league takes the projected points-per-game board and converts it to points
+ * above replacement against its own starting lineup (`src/lib/redraft-values.ts`). Both degrade
+ * to an empty map rather than throwing: `valuesReady` is how callers show a values-free page.
+ */
+export async function loadValueMap(
+  league: SleeperLeague,
+  format: LeagueFormat,
+  source: LeagueSource = liveSource,
+): Promise<{ values: Map<string, number>; attribution: Attribution | null }> {
+  if (format.basis === "redraft") {
+    const result = await source.getProjectedPpg();
+    return {
+      values: result.ok ? toRedraftValues(result.data, league) : new Map<string, number>(),
+      attribution: result.ok ? result.attribution : null,
+    };
+  }
+
+  const result = await source.getValues(format.formatKey);
+  return {
+    values: new Map<string, number>(
+      result.ok ? Object.entries(result.data).map(([id, entry]) => [id, format.superflex ? entry.sf : entry["1qb"]]) : []
+    ),
+    attribution: result.ok ? result.attribution : null,
+  };
 }
 
 /**
@@ -114,12 +150,9 @@ export async function getLeagueValueContext(leagueId: string, source: LeagueSour
   ]);
 
   const { league, state, week, regularSeason, matchupWeek, rosters } = base;
-  const { superflex, formatKey } = base.format;
+  const { superflex, formatKey, basis } = base.format;
 
-  const valuesResult = await source.getValues(formatKey);
-  const values = new Map<string, number>(
-    valuesResult.ok ? Object.entries(valuesResult.data).map(([id, entry]) => [id, superflex ? entry.sf : entry["1qb"]]) : []
-  );
+  const { values } = await loadValueMap(league, base.format, source);
 
   const valueEntries = [...values.entries()];
   const rankOverall = rankByValue(valueEntries);
@@ -157,7 +190,7 @@ export async function getLeagueValueContext(leagueId: string, source: LeagueSour
       ties: settings.ties ?? 0,
       pointsFor: points(settings.fpts, settings.fpts_decimal),
       pointsAgainst: points(settings.fpts_against, settings.fpts_against_decimal),
-      value: held.reduce((sum, entry) => sum + entry.value, 0),
+      value: sumValues(held.map((entry) => entry.value)),
       roster: held,
       starters: roster.starters ?? [],
       taxi: roster.taxi ?? [],
@@ -170,7 +203,7 @@ export async function getLeagueValueContext(leagueId: string, source: LeagueSour
   const leagueRooms = new Map<string, number[]>(
     ROOM_POSITIONS.map((position) => [
       position,
-      valuedTeams.map((team) => team.roster.filter((entry) => entry.player.position === position).reduce((sum, entry) => sum + entry.value, 0)),
+      valuedTeams.map((team) => sumValues(team.roster.filter((entry) => entry.player.position === position).map((entry) => entry.value))),
     ])
   );
   const valueRanks = rankByValue(valuedTeams.map((team) => [String(team.rosterId), team.value]));
@@ -194,6 +227,7 @@ export async function getLeagueValueContext(leagueId: string, source: LeagueSour
     regularSeason,
     superflex,
     formatKey,
+    basis,
     catalog,
     catalogReady: catalog.size > 0,
     values,

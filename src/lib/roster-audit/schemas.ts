@@ -57,7 +57,10 @@ export const playerSearchResponseSchema = z.object({ players: z.array(searchPlay
 const weeklyStatSchema = z.object({ wk: num }).passthrough();
 export const playerStatsResponseSchema = z.object({ season: z.string(), weekly: z.array(weeklyStatSchema), summary: z.record(z.string(), z.union([z.string(), z.number(), z.null()])), career: z.array(z.record(z.string(), z.union([z.string(), z.number(), z.null()]))), attribution: z.string().optional(), attribution_url: z.string().optional() });
 
-const ppgRankingSchema = z.object({ rank: num, sleeper_id: z.string(), name: z.string(), position: z.string(), team: z.string().nullable(), age: num, ppg: num, dynasty_val: num, dynasty_rank: num }).passthrough();
+// `age` and the dynasty columns are nullable in practice — a player RosterAudit has not aged, or
+// has not priced, still carries a projection, and losing the whole board over one null would
+// take every redraft league's value basis with it.
+const ppgRankingSchema = z.object({ rank: num, sleeper_id: z.string(), name: z.string(), position: z.string(), team: z.string().nullable(), age: nullableNum, ppg: num, dynasty_val: nullableNum, dynasty_rank: nullableNum }).passthrough();
 export const ppgRankingsResponseSchema = z.object({ rankings: z.array(ppgRankingSchema), count: num, position: z.string(), scoring: z.string(), attribution: z.string().optional(), attribution_url: z.string().optional() });
 
 const FALLBACK_ATTRIBUTION: Attribution = { text: "Values by RosterAudit.com", url: "https://rosteraudit.com" };

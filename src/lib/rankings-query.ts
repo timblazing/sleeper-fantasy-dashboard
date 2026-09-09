@@ -7,6 +7,8 @@
 // label — a league only ever has one format, so offering the other three invited the
 // reader to look at values that do not apply to their league.
 
+import type { ValueBasis } from "@/lib/value-basis";
+
 export const RANKINGS_POSITIONS = ["all", "QB", "RB", "WR", "TE", "picks", "rookies"] as const;
 export const RANKINGS_SORTS = ["value", "age", "name"] as const;
 export const MIN_RANKINGS_AGE = 20;
@@ -64,6 +66,10 @@ export function serializeRankingsQuery(query: RankingsQuery, overrides: Partial<
   const qs = params.toString();
   return qs ? `?${qs}` : "";
 }
+
+/** Redraft has no pick market and no rookie board, so those two tabs do not exist there. */
+export const rankingsPositionsFor = (basis: ValueBasis): readonly RankingsPosition[] =>
+  basis === "dynasty" ? RANKINGS_POSITIONS : RANKINGS_POSITIONS.filter((position) => position !== "picks" && position !== "rookies");
 
 export const rankingsHref = (leagueId: string, query: RankingsQuery, overrides: Partial<RankingsQuery> = {}) => `/${leagueId}/players${serializeRankingsQuery(query, overrides)}`;
 

@@ -1,8 +1,10 @@
 import { type InjuryQuery, SEVERITIES, type Severity } from "@/lib/injury-query";
 import { getLeagueBase, teamIdentity } from "@/lib/league-context";
 import { liveSource, type LeagueSource } from "@/lib/league-source";
+import { loadValueMap } from "@/lib/league-values";
 import { resolvePlayer } from "@/lib/players";
 import type { NflPlayer, PlayerGame } from "@/lib/types";
+import { sumValues, type ValueBasis } from "@/lib/value-basis";
 
 /** Verbatim Sleeper `injury_status` values that mean the player will not play. */
 const OUT_STATUSES = new Set(["IR", "PUP", "Out", "Sus", "NA", "COV", "DNR"]);
@@ -19,7 +21,7 @@ export type InjuryEntry = {
   /** True when the roster is parking the player on taxi rather than in an active slot. */
   onTaxi: boolean;
   severity: Severity;
-  /** Dynasty value in this league's format, or null when RosterAudit is unreachable. */
+  /** Value in this league's basis, or null when RosterAudit is unreachable. */
   value: number | null;
   /** This week's game, so a reader can tell "Out" from "Out, and on bye anyway". */
   game: PlayerGame | null;
@@ -27,6 +29,8 @@ export type InjuryEntry = {
 
 export type InjuryReport = {
   entries: InjuryEntry[];
+  /** Which currency `value` and `valueAtRisk` are quoted in. */
+  basis: ValueBasis;
   catalogReady: boolean;
   valuesReady: boolean;
   week: number;
@@ -43,7 +47,7 @@ export type InjuryTeamRollup = {
   name: string;
   counts: Record<Severity, number>;
   startersAffected: number;
-  /** Combined dynasty value sitting on the injury report for this team. */
+  /** Combined value sitting on the injury report for this team, in the league's basis. */
   valueAtRisk: number;
 };
 
@@ -77,16 +81,12 @@ export async function getInjuryReport(leagueId: string, source: LeagueSource = l
     source.getPlayerCatalog().catch(() => new Map<string, NflPlayer>()),
   ]);
 
-  const { superflex, formatKey } = base.format;
   // Both enrichments are strictly additive: the page is still correct and useful with neither,
   // so a failure in either degrades to null rather than failing the read.
-  const [valuesResult, games] = await Promise.all([
-    source.getValues(formatKey),
+  const [{ values }, games] = await Promise.all([
+    loadValueMap(base.league, base.format, source),
     source.getWeekGamesByTeam(base.state.season, base.matchupWeek).catch(() => new Map<string, PlayerGame>()),
   ]);
-  const values = new Map<string, number>(
-    valuesResult.ok ? Object.entries(valuesResult.data).map(([id, entry]) => [id, superflex ? entry.sf : entry["1qb"]]) : []
-  );
 
   const entries = base.rosters.flatMap((roster) => {
     const team = base.teamByRoster.get(roster.roster_id) ?? teamIdentity(roster);
@@ -131,7 +131,7 @@ export async function getInjuryReport(leagueId: string, source: LeagueSource = l
     rollup.counts[entry.severity] += 1;
     if (entry.isStarter) rollup.startersAffected += 1;
     // Only what is unavailable or in doubt is "at risk" — a watch-list body part is not a loss.
-    if (entry.severity !== "watch") rollup.valueAtRisk += entry.value ?? 0;
+    if (entry.severity !== "watch") rollup.valueAtRisk = sumValues([rollup.valueAtRisk, entry.value ?? 0]);
     rollups.set(entry.rosterId, rollup);
   }
 
@@ -141,6 +141,7 @@ export async function getInjuryReport(leagueId: string, source: LeagueSource = l
 
   return {
     entries,
+    basis: base.format.basis,
     catalogReady: catalog.size > 0,
     valuesReady: values.size > 0,
     week: base.matchupWeek,

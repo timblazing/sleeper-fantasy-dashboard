@@ -11,25 +11,31 @@ const QUERY: RankingsQuery = { position: "all", search: "", sort: "value", page:
 const positionButtons = () => [...(screen.getByRole("group", { name: "Position" }).querySelectorAll("a"))];
 
 describe("RankingsToolbar position filters", () => {
+  // Redraft has no pick market and no rookie board, so those two tabs are not offered there.
+  it("drops Picks and Rookies for a redraft league", () => {
+    render(<RankingsToolbar basis="redraft" leagueId="L1" query={QUERY} />);
+    expect(positionButtons().map((anchor) => anchor.textContent)).toEqual(["All", "QB", "RB", "WR", "TE"]);
+  });
+
   it("offers Rookies immediately after Picks", () => {
-    render(<RankingsToolbar leagueId="L1" query={QUERY} />);
+    render(<RankingsToolbar basis="dynasty" leagueId="L1" query={QUERY} />);
     expect(positionButtons().map((anchor) => anchor.textContent)).toEqual(["All", "QB", "RB", "WR", "TE", "Picks", "Rookies"]);
   });
 
   it("links Rookies to the shareable position query", () => {
-    render(<RankingsToolbar leagueId="L1" query={QUERY} />);
+    render(<RankingsToolbar basis="dynasty" leagueId="L1" query={QUERY} />);
     expect(screen.getByText("Rookies").closest("a")).toHaveAttribute("href", "/L1/players?position=rookies");
   });
 
   it("marks Rookies as the current page when it is the active filter", () => {
-    render(<RankingsToolbar leagueId="L1" query={{ ...QUERY, position: "rookies" }} />);
+    render(<RankingsToolbar basis="dynasty" leagueId="L1" query={{ ...QUERY, position: "rookies" }} />);
     expect(screen.getByText("Rookies").closest("a")).toHaveAttribute("aria-current", "page");
     expect(screen.getByText("Picks").closest("a")).not.toHaveAttribute("aria-current");
   });
 
   // The username carries roster highlighting across every navigation in the app.
   it("preserves the username on the Rookies link", () => {
-    render(<RankingsToolbar leagueId="L1" query={{ ...QUERY, username: "tim" }} />);
+    render(<RankingsToolbar basis="dynasty" leagueId="L1" query={{ ...QUERY, username: "tim" }} />);
     expect(screen.getByText("Rookies").closest("a")).toHaveAttribute("href", "/L1/players?position=rookies&username=tim");
   });
 });

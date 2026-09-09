@@ -6,20 +6,20 @@ import type { RankingsResult } from "@/lib/rankings-data";
 
 // RankingsSearch reads the app-router hooks; jsdom has no router.
 vi.mock("next/navigation", () => ({ usePathname: () => "/L1/players", useRouter: () => ({ push: vi.fn(), replace: vi.fn() }) }));
-// The page reads isDynasty from getLeagueChrome — the layout already renders the shell.
+// The page reads the value basis from getLeagueChrome — the layout already renders the shell.
 vi.mock("@/lib/league-chrome", () => ({ getLeagueChrome: vi.fn() }));
 vi.mock("@/lib/rankings-data", () => ({ getRankingsView: vi.fn(), RANKINGS_PER_PAGE: 50 }));
 
 const { getLeagueChrome } = await import("@/lib/league-chrome");
 const { getRankingsView } = await import("@/lib/rankings-data");
 
-const chrome = (isDynasty: boolean): LeagueChrome => ({ id: "L1", name: "Test League", season: "2026", type: isDynasty ? "Dynasty" : "Redraft", isDynasty, isSuperflex: true, avatar: null, matchupWeek: 4 });
+const chrome = (isDynasty: boolean): LeagueChrome => ({ id: "L1", name: "Test League", season: "2026", type: isDynasty ? "Dynasty" : "Redraft", isDynasty, basis: isDynasty ? "dynasty" : "redraft", isSuperflex: true, avatar: null, matchupWeek: 4 });
 
 const VIEW: RankingsResult = {
   ok: true,
   view: {
     leagueId: "L1", leagueName: "Test League", leagueSummary: "12T · SF · PPR", isSuperflex: true,
-    presetKey: "sf-ppr", presetLabel: "SF PPR",
+    basis: "dynasty", presetKey: "sf-ppr", presetLabel: "SF PPR",
     rows: [{ kind: "player", key: "player-1", rank: 1, sleeperId: "1", name: "Bijan Robinson", position: "RB", team: "ATL", age: 24.5, tier: 1, value: 10000, trend7d: 0, rankPosition: 1, photoUrl: null, owner: null }],
     total: 1, totalLabel: "1 player", page: 1, totalPages: 1, maxValue: 10000,
     // Populated on purpose: the page must not render movers even when the view carries them.
@@ -45,14 +45,16 @@ describe("PlayersPage", () => {
     expect(screen.getByText("Bijan Robinson")).toBeInTheDocument();
     // The RosterAudit credit is the layout's SiteFooter now, not this page's own attribution.
     expect(screen.queryByText("Values by RosterAudit.com")).not.toBeInTheDocument();
-    expect(screen.queryByText("Players needs a dynasty league")).not.toBeInTheDocument();
+    expect(screen.getByText("Dynasty market values for every player, ranked and filterable.")).toBeInTheDocument();
   });
 
-  it("renders DynastyRequired instead of the rankings table for a non-dynasty league", async () => {
+  // The page used to replace its whole body with a "needs a dynasty league" lock. A redraft
+  // league now gets the same table, described in the currency its rows are actually quoted in.
+  it("renders the rankings table for a redraft league, described as points above replacement", async () => {
     await renderPage(false);
-    expect(screen.getByText("Players needs a dynasty league")).toBeInTheDocument();
-    expect(screen.queryByText("Bijan Robinson")).not.toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Back to league overview" })).toHaveAttribute("href", "/L1");
+    expect(screen.getByText("Bijan Robinson")).toBeInTheDocument();
+    expect(screen.getByText("Projected points per game above replacement in this league's starting lineup, ranked and filterable.")).toBeInTheDocument();
+    expect(screen.queryByText("Players needs a dynasty league")).not.toBeInTheDocument();
   });
 
   it("renders the rate-limited empty state and no table when the read fails", async () => {

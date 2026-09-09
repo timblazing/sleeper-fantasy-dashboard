@@ -39,8 +39,8 @@ beforeAll(() => {
 beforeEach(() => { pending.length = 0; });
 
 const teams = [
-  { name: "Dynasty Club", plan: "2026", url: "/1", logo: "https://sleepercdn.com/avatars/thumbs/abc" },
-  { name: "Redraft Club", plan: "2026", url: "/2", disabled: true, disabledReason: "Redraft leagues are not supported yet" },
+  { name: "Dynasty Club", plan: "Dynasty", url: "/1", logo: "https://sleepercdn.com/avatars/thumbs/abc" },
+  { name: "Redraft Club", plan: "Redraft", url: "/2" },
 ];
 
 async function openMenu() {
@@ -52,18 +52,19 @@ async function openMenu() {
 }
 
 describe("TeamSwitcher", () => {
-  it("links to dynasty leagues and greys out the rest", async () => {
+  // Redraft leagues used to render as inert, locked text. Every format is selectable now, and the
+  // format itself is the muted label that took the lock's place.
+  it("links to every league and labels each with its format", async () => {
     await openMenu();
     const items = screen.getAllByRole("menuitem");
     const dynasty = items.find((item) => item.textContent?.includes("Dynasty Club"))!;
     const redraft = items.find((item) => item.textContent?.includes("Redraft Club"))!;
 
     expect(dynasty.closest("a")?.getAttribute("href") ?? dynasty.getAttribute("href")).toBe("/1");
-    expect(redraft).toHaveAttribute("data-disabled");
-    // A disabled option must not stay navigable — no anchor at all.
-    expect(redraft.querySelector("a")).toBeNull();
-    expect(redraft.tagName).not.toBe("A");
-    expect(screen.getByText("Redraft leagues are not supported yet")).toBeInTheDocument();
+    expect(redraft.closest("a")?.getAttribute("href") ?? redraft.getAttribute("href")).toBe("/2");
+    expect(redraft).not.toHaveAttribute("data-disabled");
+    expect(screen.getByText("Redraft")).toBeInTheDocument();
+    expect(screen.queryByText("Redraft leagues are not supported yet")).not.toBeInTheDocument();
   });
 });
 

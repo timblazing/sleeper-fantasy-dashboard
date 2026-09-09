@@ -6,6 +6,7 @@ import { getNflLeaguesForUsername } from "@/lib/sleeper";
 import { getTransactionFeed, toActivityItem } from "@/lib/transaction-feed";
 import { withUsername } from "@/lib/utils";
 import type { ActivityItem, MatchupDetail, RosterSlot, SleeperAccount } from "@/lib/types";
+import { basisMeta, sumValues } from "@/lib/value-basis";
 
 export type Tone = "positive" | "warning" | "critical" | "neutral";
 export type Insight = { id: string; tone: Tone; title: string; detail: string };
@@ -181,7 +182,7 @@ function buildInsights(context: LeagueValueContext, team: LeagueTeam, trends: Ma
       id: "matchup-edge",
       tone: diff >= 0 ? "positive" : "warning",
       title: diff >= 0 ? `You start the more valuable lineup` : `${opponent.name} starts the more valuable lineup`,
-      detail: `${formatValue(edge.mine)} of starting value against ${formatValue(edge.theirs)} — a ${diff >= 0 ? "+" : ""}${formatValue(Math.abs(diff))} ${diff >= 0 ? "edge" : "deficit"} on paper.`,
+      detail: `${formatValue(edge.mine)} of starting ${context.basis === "dynasty" ? "value" : basisMeta(context.basis).columnLabel} against ${formatValue(edge.theirs)} — a ${diff >= 0 ? "+" : ""}${formatValue(Math.abs(diff))} ${diff >= 0 ? "edge" : "deficit"} on paper.`,
     });
   }
 
@@ -233,7 +234,7 @@ function buildMetrics(context: LeagueValueContext, team: LeagueTeam, outlook: Te
   const weakest = team.rooms.toSorted((a, b) => b.rank - a.rank)[0];
   const strongest = team.rooms.toSorted((a, b) => a.rank - b.rank)[0];
   return [
-    { id: "value", label: "Team value", value: formatValue(team.value), detail: `${ordinal(team.valueRank)} of ${teams}`, tone: team.valueRank <= half ? "positive" : "warning" },
+    { id: "value", label: context.basis === "dynasty" ? "Team value" : "Roster PPG+", value: formatValue(team.value), detail: `${ordinal(team.valueRank)} of ${teams}`, tone: team.valueRank <= half ? "positive" : "warning" },
     dynastyMetric(context, team, outlook, half),
     { id: "weakest", label: "Weakest spot", value: weakest.position, detail: `${ordinal(weakest.rank)} of ${teams}`, tone: weakest.rank > half ? "warning" : "neutral" },
     { id: "strongest", label: "Strongest spot", value: strongest.position, detail: `${ordinal(strongest.rank)} of ${teams}`, tone: "positive" },
@@ -316,21 +317,24 @@ export async function getOverviewData(leagueId: string, username?: string): Prom
   const link = (path: string) => withUsername(path, username);
   const team = findTeamForUser(context, account?.userId) ?? null;
 
+  // /movers reports dynasty market movement in dynasty units. It is not merely unhelpful in a
+  // redraft league, it is the wrong number — so it is not requested, and the sell-high and fading
+  // recommendations it feeds simply do not appear there.
   const [board, moversResult, feed] = await Promise.all([
     getMatchupBoard(leagueId, context.matchupWeek).catch(() => null),
-    getMovers({ limit: 60 }),
+    context.basis === "dynasty" ? getMovers({ limit: 60 }) : undefined,
     getTransactionFeed(leagueId, 8).catch(() => []),
   ]);
 
   const trends = new Map<string, number>();
-  if (moversResult.ok) for (const mover of [...moversResult.data.risers, ...moversResult.data.fallers]) trends.set(mover.sleeperId, mover.trend7d);
+  if (moversResult?.ok) for (const mover of [...moversResult.data.risers, ...moversResult.data.fallers]) trends.set(mover.sleeperId, mover.trend7d);
 
   const found = team && board ? board.matchups.find((entry) => entry.home.team.rosterId === team.rosterId || entry.away.team.rosterId === team.rosterId) : undefined;
   // Always render the connected team on the left, whichever side Sleeper put them on.
   const matchup = found && team && found.away.team.rosterId === team.rosterId ? { ...found, home: found.away, away: found.home } : found ?? board?.matchups[0] ?? null;
 
   const slots = team ? starterSlots(matchup, team.rosterId) : [];
-  const starterValue = (entries: RosterSlot[]) => entries.reduce((sum, entry) => sum + (entry.player ? context.values.get(entry.player.id) ?? 0 : 0), 0);
+  const starterValue = (entries: RosterSlot[]) => sumValues(entries.map((entry) => (entry.player ? context.values.get(entry.player.id) ?? 0 : 0)));
   const matchupEdge = matchup && team && context.valuesReady ? { mine: starterValue(matchup.home.slots), theirs: starterValue(matchup.away.slots) } : null;
   const outlook = team ? buildOutlook(team, context.teams.length, context.week) : null;
   return {

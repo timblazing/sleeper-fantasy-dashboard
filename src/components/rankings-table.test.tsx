@@ -13,12 +13,13 @@ const playerRow = (over: Partial<RankingsPlayerRow> = {}): RankingsPlayerRow => 
 
 const pickRow = (over: Partial<RankingsPickRow> = {}): RankingsPickRow => ({ kind: "pick", key: "pick-1", rank: 25, label: "2027 Early 1st", value: 5005, ...over });
 
-const view = (rows: RankingsView["rows"]): RankingsView => ({
+const view = (rows: RankingsView["rows"], over: Partial<RankingsView> = {}): RankingsView => ({
   leagueId: "L1", leagueName: "Test League", leagueSummary: "12T · SF · PPR", isSuperflex: true,
-  presetKey: "sf-ppr", presetLabel: "SF PPR",
+  basis: "dynasty", presetKey: "sf-ppr", presetLabel: "SF PPR",
   rows, total: rows.length, totalLabel: `${rows.length} players`, page: 1, totalPages: 1,
   maxValue: rows.reduce((max, row) => Math.max(max, row.value), 0),
   movers: null, attribution: { text: "Values by RosterAudit.com", url: "https://rosteraudit.com" },
+  ...over,
 });
 
 describe("RankingsTable", () => {

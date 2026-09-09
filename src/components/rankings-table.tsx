@@ -11,6 +11,7 @@ import { Progress } from "@/components/ui/progress";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import type { RankingsRow, RankingsView } from "@/lib/rankings-data";
 import { describeRankingsFilters, rankingsHref, type RankingsQuery } from "@/lib/rankings-query";
+import { basisMeta } from "@/lib/value-basis";
 import { withUsername } from "@/lib/utils";
 
 const initials = (name: string) => name.split(/\s|&/).filter(Boolean).slice(0, 2).map((word) => word[0]).join("").toUpperCase();
@@ -21,7 +22,7 @@ function Trend({ value }: { value: number }) {
   return <span className={`inline-flex items-center gap-1 font-mono text-xs ${value > 0 ? "text-positive" : "text-destructive"}`}><Icon aria-hidden="true" className="size-3" />{value > 0 ? "+" : ""}{value.toLocaleString()}</span>;
 }
 
-function RankingsRowCells({ row, leagueId, username, maxValue }: { row: RankingsRow; leagueId: string; username?: string; maxValue: number }) {
+function RankingsRowCells({ row, leagueId, username, maxValue, showTrend }: { row: RankingsRow; leagueId: string; username?: string; maxValue: number; showTrend: boolean }) {
   const share = maxValue > 0 ? Math.max(2, Math.round((row.value / maxValue) * 100)) : 0;
   const mine = row.kind === "player" && row.owner?.isMine;
 
@@ -49,12 +50,15 @@ function RankingsRowCells({ row, leagueId, username, maxValue }: { row: Rankings
         <div className="flex min-w-20 flex-col gap-1 sm:min-w-28"><span className="font-mono font-medium tabular-nums">{row.value.toLocaleString()}</span><Progress className="w-full max-sm:hidden" value={share} /></div>
       </TableCell>
       <TableCell className="hidden text-muted-foreground md:table-cell max-lg:pr-4">{row.kind === "pick" ? "—" : row.age !== null ? row.age.toFixed(1) : "—"}</TableCell>
-      <TableCell className="hidden lg:table-cell">{row.kind === "pick" ? <span className="text-muted-foreground">—</span> : <Trend value={row.trend7d} />}</TableCell>
+      {showTrend ? <TableCell className="hidden lg:table-cell">{row.kind === "pick" ? <span className="text-muted-foreground">—</span> : <Trend value={row.trend7d} />}</TableCell> : null}
     </TableRow>
   );
 }
 
 export function RankingsTable({ view, query }: { view: RankingsView; query: RankingsQuery }) {
+  // The projection board publishes no day-over-day movement, so redraft drops the 7d column
+  // rather than filling it with zeroes.
+  const showTrend = basisMeta(view.basis).hasMarket;
   if (!view.rows.length) {
     const active = describeRankingsFilters(query);
     return (
@@ -82,13 +86,13 @@ export function RankingsTable({ view, query }: { view: RankingsView; query: Rank
               <TableHead className="w-12"><span className="sm:hidden">#</span><span className="max-sm:hidden">Rank</span></TableHead>
               <TableHead>Player</TableHead>
               <TableHead className="max-sm:hidden">Position</TableHead>
-              <TableHead className="w-24 max-md:pr-4">Value</TableHead>
+              <TableHead className="w-24 max-md:pr-4">{basisMeta(view.basis).columnLabel}</TableHead>
               <TableHead className="hidden md:table-cell max-lg:pr-4">Age</TableHead>
-              <TableHead className="hidden lg:table-cell">7d</TableHead>
+              {showTrend ? <TableHead className="hidden lg:table-cell">7d</TableHead> : null}
             </TableRow>
           </TableHeader>
           <TableBody>
-            {view.rows.map((row) => <RankingsRowCells key={row.key} leagueId={view.leagueId} maxValue={view.maxValue} row={row} username={query.username} />)}
+            {view.rows.map((row) => <RankingsRowCells key={row.key} leagueId={view.leagueId} maxValue={view.maxValue} row={row} showTrend={showTrend} username={query.username} />)}
           </TableBody>
         </Table>
       </CardContent>

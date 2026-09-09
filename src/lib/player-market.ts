@@ -42,10 +42,10 @@ function searchContext(context: LeagueValueContext, query: string, trends: Map<s
 
 /** Lightweight live-search read used by the trade calculator's hypothetical-player search. */
 export async function searchMarketPlayers(leagueId: string, query: string, limit = FEATURED_LIMIT): Promise<MarketPlayer[]> {
-  const [context, moversResult] = await Promise.all([
-    getLeagueValueContext(leagueId),
-    getMovers({ limit: MOVER_LIMIT }),
-  ]);
-  const movers = moversResult.ok ? [...moversResult.data.risers, ...moversResult.data.fallers] : [];
+  const context = await getLeagueValueContext(leagueId);
+  // Market movement is a dynasty number; a redraft search returns a flat trend rather than one
+  // measured in the wrong currency.
+  const moversResult = context.basis === "dynasty" ? await getMovers({ limit: MOVER_LIMIT }) : undefined;
+  const movers = moversResult?.ok ? [...moversResult.data.risers, ...moversResult.data.fallers] : [];
   return searchContext(context, query, trendMap(movers), limit);
 }

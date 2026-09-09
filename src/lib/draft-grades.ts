@@ -1,7 +1,9 @@
 import { getLeagueBase, teamIdentity } from "@/lib/league-context";
 import { liveSource, type LeagueSource } from "@/lib/league-source";
+import { loadValueMap } from "@/lib/league-values";
 import { resolvePlayer } from "@/lib/players";
 import type { SleeperDraft, SleeperTradedPick } from "@/lib/types";
+import { basisMeta, roundValue, sumValues, type ValueBasis } from "@/lib/value-basis";
 
 export type DraftPickGrade = {
   id: string;
@@ -73,7 +75,9 @@ export type DraftGradeData = {
   rounds: number;
   teams: number;
   superflex: boolean;
-  /** False when RosterAudit's slot curve is unavailable and grades fall back to a within-class benchmark. */
+  /** Which currency `value`, `slotValue` and `surplus` are quoted in. */
+  basis: ValueBasis;
+  /** True when grades are measured against RosterAudit's slot curve rather than the class itself. */
   curveBacked: boolean;
   managers: DraftManagerGrade[];
   allPicks: (DraftPickGrade & { rosterId: number; manager: string })[];
@@ -92,21 +96,17 @@ export type DraftGradeData = {
  *
  * RosterAudit grades by finishing order, which forces a D onto somebody even in a draft where every
  * manager beat their slots. Fixed thresholds let a whole class grade well or badly, which is both
- * more honest and the only way a grade compares across seasons. The bands are in RosterAudit value
- * units, where a mid-first is ~2,900 and a late-third ~130, so ±300/pick is a real swing.
+ * more honest and the only way a grade compares across seasons.
+ *
+ * The bands are written as fractions of the basis's `gradeUnit` so the same ladder reads correctly
+ * in either currency: 1,000 dynasty value units (a mid-first is ~2,900, a late-third ~130) and
+ * 3 points per game above replacement span one band each.
  */
-export function gradeForSurplus(surplusPerPick: number): string {
-  if (surplusPerPick >= 900) return "A+";
-  if (surplusPerPick >= 500) return "A";
-  if (surplusPerPick >= 250) return "A-";
-  if (surplusPerPick >= 120) return "B+";
-  if (surplusPerPick >= 40) return "B";
-  if (surplusPerPick >= -40) return "B-";
-  if (surplusPerPick >= -120) return "C+";
-  if (surplusPerPick >= -250) return "C";
-  if (surplusPerPick >= -500) return "C-";
-  if (surplusPerPick >= -900) return "D";
-  return "F";
+const GRADE_BANDS: [number, string][] = [[0.9, "A+"], [0.5, "A"], [0.25, "A-"], [0.12, "B+"], [0.04, "B"], [-0.04, "B-"], [-0.12, "C+"], [-0.25, "C"], [-0.5, "C-"], [-0.9, "D"]];
+
+export function gradeForSurplus(surplusPerPick: number, basis: ValueBasis): string {
+  const scaled = surplusPerPick / basisMeta(basis).gradeUnit;
+  return GRADE_BANDS.find(([floor]) => scaled >= floor)?.[1] ?? "F";
 }
 
 const draftLabel = (draft: SleeperDraft, rookie: boolean) => `${draft.season} ${rookie ? "Rookie Draft" : "Draft"}`;
@@ -161,11 +161,14 @@ function gradeDraft(
   curve: Record<number, number>,
   catalog: Awaited<ReturnType<LeagueSource["getPlayerCatalog"]>>,
   teamNameByRoster: Map<number, string>,
+  basis: ValueBasis,
 ): GradedDraft {
   const ordered = rawPicks.toSorted((a, b) => a.pick_no - b.pick_no);
   const curveBacked = Object.keys(curve).length > 0;
-  // Without the curve, fall back to the old benchmark: the Nth-best player of this same class. It
-  // grades a class against itself, so it is only ever a degraded mode — hence `curveBacked`.
+  // Without the curve, benchmark against the class itself: the Nth-best player taken is what the
+  // Nth pick was worth. For a dynasty league that is a degraded mode (hence `curveBacked`), but
+  // for a redraft draft it is the only honest benchmark — there is no rookie-pick market to price
+  // a startup slot against, and every manager drafted from the same pool on the same day.
   const classBenchmark = ordered.map((pick) => values[pick.player_id] ?? 0).toSorted((a, b) => b - a);
   const owners = originalOwnerByPickNo(ordered, traded, draft.season);
 
@@ -173,7 +176,7 @@ function gradeDraft(
     const player = resolvePlayer(catalog, pick.player_id);
     const value = values[pick.player_id] ?? 0;
     const slotValue = curveBacked ? (curve[pick.pick_no] ?? 0) : (classBenchmark[pick.pick_no - 1] ?? value);
-    const surplus = value - slotValue;
+    const surplus = sumValues([value, -slotValue]);
     const origin = owners.get(pick.pick_no);
     return {
       id: `${draft.draft_id}:${pick.pick_no}`,
@@ -187,7 +190,7 @@ function gradeDraft(
       value,
       slotValue,
       surplus,
-      grade: gradeForSurplus(surplus),
+      grade: gradeForSurplus(surplus, basis),
       acquiredFrom: origin !== undefined && origin !== pick.roster_id ? (teamNameByRoster.get(origin) ?? `Roster ${origin}`) : null,
       rosterId: pick.roster_id,
       manager: teamNameByRoster.get(pick.roster_id) ?? `Roster ${pick.roster_id}`,
@@ -196,6 +199,7 @@ function gradeDraft(
   return { draft, picks, curveBacked };
 }
 
+/** Counts (picks, hits) add plainly; anything measured in the league's basis goes through `sumValues`. */
 const sum = (values: number[]) => values.reduce((total, value) => total + value, 0);
 const rate = (hits: number, total: number) => (total ? Math.round((hits / total) * 100) : 0);
 
@@ -226,17 +230,21 @@ export async function getDraftGradeData(leagueId: string, requestedDraftId?: str
   const empty: DraftGradeData = {
     drafts: draftOptions, selectedDraftId: null, selectedLabel: "Draft", selectedSeason: "",
     rounds: 0, teams: league.settings.num_teams ?? rosters.length, superflex: format.superflex,
-    curveBacked: false, managers: [], allPicks: [], steals: [], reaches: [],
+    basis: format.basis, curveBacked: false, managers: [], allPicks: [], steals: [], reaches: [],
     byPosition: [], byRound: [], career: [], classes: [], attribution: null,
   };
   if (!selected) return empty;
 
-  const [valuesResult, curveResult] = await Promise.all([source.getValues(format.formatKey), source.getPickCurve()]);
-  const values: Record<string, number> = valuesResult.ok
-    ? Object.fromEntries(Object.entries(valuesResult.data).map(([id, value]) => [id, format.superflex ? value.sf : value["1qb"]]))
-    : {};
-  const curve = curveResult.ok ? (format.superflex ? curveResult.data.sf : curveResult.data.oneQb) : {};
-  const attribution = valuesResult.ok ? valuesResult.attribution : curveResult.ok ? curveResult.attribution : null;
+  // The slot curve is priced in dynasty value units and describes a rookie draft, so it is only
+  // asked for — and only ever applied — on the basis it belongs to. A redraft class is graded
+  // against itself: the Nth-best player taken is what the Nth pick was really worth.
+  const [valueMap, curveResult] = await Promise.all([
+    loadValueMap(league, format, source),
+    format.basis === "dynasty" ? source.getPickCurve() : undefined,
+  ]);
+  const values: Record<string, number> = Object.fromEntries(valueMap.values);
+  const curve = curveResult?.ok ? (format.superflex ? curveResult.data.sf : curveResult.data.oneQb) : {};
+  const attribution = valueMap.attribution ?? (curveResult?.ok ? curveResult.attribution : null);
 
   // Every completed draft is graded, not just the selected one: the career table and the class
   // comparison both need history, and each draft is two cached reads.
@@ -245,7 +253,7 @@ export async function getDraftGradeData(leagueId: string, requestedDraftId?: str
       source.getDraftPicks(draft.draft_id).catch(() => []),
       source.getDraftTradedPicks(draft.draft_id).catch(() => []),
     ]);
-    return gradeDraft(draft, picks, traded, values, curve, catalog, teamNameByRoster);
+    return gradeDraft(draft, picks, traded, values, curve, catalog, teamNameByRoster, format.basis);
   }));
 
   const current = graded.find((entry) => entry.draft.draft_id === selected.draft_id) ?? graded[0];
@@ -254,16 +262,16 @@ export async function getDraftGradeData(leagueId: string, requestedDraftId?: str
   const managers = [...identityByRoster.values()]
     .map((identity) => {
       const picks = allPicks.filter((pick) => pick.rosterId === identity.rosterId);
-      const surplus = sum(picks.map((pick) => pick.surplus));
+      const surplus = sumValues(picks.map((pick) => pick.surplus));
       const ranked = picks.toSorted((a, b) => b.surplus - a.surplus);
       return {
         ...identity,
-        grade: gradeForSurplus(picks.length ? surplus / picks.length : 0),
+        grade: gradeForSurplus(picks.length ? surplus / picks.length : 0, format.basis),
         hitRate: rate(picks.filter((pick) => pick.surplus >= 0).length, picks.length),
         surplus,
-        surplusPerPick: picks.length ? Math.round(surplus / picks.length) : 0,
-        spent: sum(picks.map((pick) => pick.slotValue)),
-        earned: sum(picks.map((pick) => pick.value)),
+        surplusPerPick: picks.length ? roundValue(surplus / picks.length, format.basis) : 0,
+        spent: sumValues(picks.map((pick) => pick.slotValue)),
+        earned: sumValues(picks.map((pick) => pick.value)),
         best: ranked[0] ?? null,
         worst: ranked.length > 1 ? (ranked.at(-1) ?? null) : null,
         picks,
@@ -277,8 +285,8 @@ export async function getDraftGradeData(leagueId: string, requestedDraftId?: str
   const byPosition = positions
     .map((position) => {
       const picks = allPicks.filter((pick) => (pick.position ?? "—") === position);
-      const surplus = sum(picks.map((pick) => pick.surplus));
-      return { position, picks: picks.length, surplus, surplusPerPick: Math.round(surplus / picks.length), hitRate: rate(picks.filter((pick) => pick.surplus >= 0).length, picks.length) };
+      const surplus = sumValues(picks.map((pick) => pick.surplus));
+      return { position, picks: picks.length, surplus, surplusPerPick: roundValue(surplus / picks.length, format.basis), hitRate: rate(picks.filter((pick) => pick.surplus >= 0).length, picks.length) };
     })
     .toSorted((a, b) => b.surplusPerPick - a.surplusPerPick);
 
@@ -286,8 +294,8 @@ export async function getDraftGradeData(leagueId: string, requestedDraftId?: str
   const byRound = Array.from({ length: rounds }, (_, index) => index + 1)
     .map((round) => {
       const picks = allPicks.filter((pick) => pick.round === round);
-      const surplus = sum(picks.map((pick) => pick.surplus));
-      return { round, picks: picks.length, surplus, surplusPerPick: picks.length ? Math.round(surplus / picks.length) : 0 };
+      const surplus = sumValues(picks.map((pick) => pick.surplus));
+      return { round, picks: picks.length, surplus, surplusPerPick: picks.length ? roundValue(surplus / picks.length, format.basis) : 0 };
     })
     .filter((row) => row.picks);
 
@@ -296,17 +304,17 @@ export async function getDraftGradeData(leagueId: string, requestedDraftId?: str
       const bySeason = graded
         .map((entry) => {
           const picks = entry.picks.filter((pick) => pick.rosterId === identity.rosterId);
-          const surplus = sum(picks.map((pick) => pick.surplus));
-          const perPick = picks.length ? Math.round(surplus / picks.length) : 0;
-          return { season: entry.draft.season, surplus, surplusPerPick: perPick, picks: picks.length, grade: gradeForSurplus(perPick) };
+          const surplus = sumValues(picks.map((pick) => pick.surplus));
+          const perPick = picks.length ? roundValue(surplus / picks.length, format.basis) : 0;
+          return { season: entry.draft.season, surplus, surplusPerPick: perPick, picks: picks.length, grade: gradeForSurplus(perPick, format.basis) };
         })
         .filter((row) => row.picks)
         .toSorted((a, b) => Number(a.season) - Number(b.season));
       const picks = sum(bySeason.map((row) => row.picks));
-      const surplus = sum(bySeason.map((row) => row.surplus));
-      const perPick = picks ? Math.round(surplus / picks) : 0;
+      const surplus = sumValues(bySeason.map((row) => row.surplus));
+      const perPick = picks ? roundValue(surplus / picks, format.basis) : 0;
       const hits = sum(graded.map((entry) => entry.picks.filter((pick) => pick.rosterId === identity.rosterId && pick.surplus >= 0).length));
-      return { ...identity, drafts: bySeason.length, picks, surplus, surplusPerPick: perPick, hitRate: rate(hits, picks), grade: gradeForSurplus(perPick), bySeason };
+      return { ...identity, drafts: bySeason.length, picks, surplus, surplusPerPick: perPick, hitRate: rate(hits, picks), grade: gradeForSurplus(perPick, format.basis), bySeason };
     })
     .filter((row) => row.picks)
     .toSorted((a, b) => b.surplusPerPick - a.surplusPerPick);
@@ -317,7 +325,7 @@ export async function getDraftGradeData(leagueId: string, requestedDraftId?: str
       return {
         season: entry.draft.season,
         draftId: entry.draft.draft_id,
-        totalSurplus: sum(entry.picks.map((pick) => pick.surplus)),
+        totalSurplus: sumValues(entry.picks.map((pick) => pick.surplus)),
         hitRate: rate(entry.picks.filter((pick) => pick.surplus >= 0).length, entry.picks.length),
         tradedPickShare: rate(acquired.length, entry.picks.length),
       };
@@ -332,6 +340,7 @@ export async function getDraftGradeData(leagueId: string, requestedDraftId?: str
     rounds,
     teams: selected.settings.teams ?? league.settings.num_teams ?? rosters.length,
     superflex: format.superflex,
+    basis: format.basis,
     curveBacked: current.curveBacked,
     managers,
     allPicks,

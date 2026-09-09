@@ -2,10 +2,9 @@ import { AmbulanceIcon, BinocularsIcon, BookOpenIcon, ClipboardListIcon, LayoutD
 
 // `segment` matches what useSelectedLayoutSegment() reports under the [leagueId] layout;
 // null is the index route (Dashboard).
-// `dynastyOnly` entries need trade values, which only exist for dynasty leagues;
-// the sidebar drops them and explains the gap. Everything else always renders —
-// including the injury report, which reads only rosters and Sleeper's player catalog.
-export type NavEntry = { title: string; segment: string | null; icon: LucideIcon; dynastyOnly?: boolean };
+// Every entry renders for every league format. Pages that quote player values quote them in the
+// league's own basis (`src/lib/value-basis.ts`) rather than hiding themselves.
+export type NavEntry = { title: string; segment: string | null; icon: LucideIcon };
 
 export const mainNav: NavEntry[] = [
   { title: "Dashboard", segment: null, icon: LayoutDashboardIcon },
@@ -15,7 +14,7 @@ export const mainNav: NavEntry[] = [
 ];
 
 export const toolsNav: NavEntry[] = [
-  { title: "Trade Calculator", segment: "trade", icon: ScaleIcon, dynastyOnly: true },
+  { title: "Trade Calculator", segment: "trade", icon: ScaleIcon },
   { title: "Scouting Report", segment: "scouting-report", icon: BinocularsIcon },
   { title: "Injury Report", segment: "injuries", icon: AmbulanceIcon },
   { title: "Resources", segment: "resources", icon: BookOpenIcon },

@@ -17,7 +17,6 @@ import { useAccount } from "@/hooks/use-account"
 import type { LeagueChrome } from "@/lib/league-chrome"
 import { mainNav, toolsNav, type NavEntry } from "@/lib/nav"
 import { leagueAvatarProxyUrl, withUsername } from "@/lib/utils"
-import { LockIcon } from "lucide-react"
 import { useSearchParams, useSelectedLayoutSegment } from "next/navigation"
 
 export function AppSidebar({
@@ -43,14 +42,14 @@ export function AppSidebar({
   const suffix = activeSegment
     ? `/${activeSegment}${activeSegment === "matchups" ? `/${league.matchupWeek}` : ""}`
     : ""
-  // Only dynasty leagues are supported today, so non-dynasty options are shown but not selectable.
+  // Every format is selectable. What changes between them is the currency the numbers are quoted
+  // in (see `src/lib/value-basis.ts`), not which leagues the app will open — so the switcher
+  // labels each option with its format rather than locking it.
   const leagues = (account?.leagues ?? []).map((option) => ({
     name: option.name,
-    plan: option.season,
+    plan: option.type,
     url: withUsername(`/${option.id}${suffix}`, username),
     logo: option.avatar ? leagueAvatarProxyUrl(option.avatar) : undefined,
-    disabled: !option.isDynasty,
-    disabledReason: `${option.type} leagues are not supported yet`,
   }))
 
   return (
@@ -67,18 +66,7 @@ export function AppSidebar({
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={toItems(mainNav)} />
-        <NavProjects
-          locked={
-            league.isDynasty
-              ? undefined
-              : {
-                  title: "Dynasty tools unavailable",
-                  reason: "Trade values require a dynasty league.",
-                  icon: <LockIcon />,
-                }
-          }
-          projects={toItems(toolsNav.filter((entry) => league.isDynasty || !entry.dynastyOnly))}
-        />
+        <NavProjects projects={toItems(toolsNav)} />
       </SidebarContent>
       <SidebarFooter>
         <NavUser

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { deriveLeagueFormat, describeLeagueType, isDynastyLeague, isSuperflexLeague } from "@/lib/league-features";
+import { deriveLeagueFormat, describeLeagueType, isDynastyLeague, isSuperflexLeague, valueBasisFor } from "@/lib/league-features";
 import type { SleeperLeague } from "@/lib/types";
 
 const league = (settings: Record<string, number>, overrides: Partial<SleeperLeague> = {}): SleeperLeague => ({
@@ -12,6 +12,16 @@ describe("isDynastyLeague", () => {
   it("is false for settings.type 1", () => expect(isDynastyLeague(league({ type: 1 }))).toBe(false));
   it("is false for settings.type 0", () => expect(isDynastyLeague(league({ type: 0 }))).toBe(false));
   it("fails closed when settings.type is missing", () => expect(isDynastyLeague(league({}))).toBe(false));
+});
+
+describe("valueBasisFor", () => {
+  it("prices a dynasty league on the dynasty market", () => expect(valueBasisFor(league({ type: 2 }))).toBe("dynasty"));
+  // Keeper rosters mostly turn over every year, so this season's production is the closer answer.
+  it("prices keeper and redraft leagues on projected production", () => {
+    expect(valueBasisFor(league({ type: 1 }))).toBe("redraft");
+    expect(valueBasisFor(league({ type: 0 }))).toBe("redraft");
+  });
+  it("fails closed to redraft when settings.type is missing", () => expect(valueBasisFor(league({}))).toBe("redraft"));
 });
 
 describe("describeLeagueType", () => {
@@ -60,8 +70,8 @@ describe("deriveLeagueFormat", () => {
   });
 
   it("carries the dynasty flag and type label", () => {
-    expect(deriveLeagueFormat(league({ type: 2 }))).toMatchObject({ isDynasty: true, typeLabel: "Dynasty" });
-    expect(deriveLeagueFormat(league({ type: 1 }))).toMatchObject({ isDynasty: false, typeLabel: "Keeper" });
-    expect(deriveLeagueFormat(league({ type: 0 }))).toMatchObject({ isDynasty: false, typeLabel: "Redraft" });
+    expect(deriveLeagueFormat(league({ type: 2 }))).toMatchObject({ isDynasty: true, typeLabel: "Dynasty", basis: "dynasty" });
+    expect(deriveLeagueFormat(league({ type: 1 }))).toMatchObject({ isDynasty: false, typeLabel: "Keeper", basis: "redraft" });
+    expect(deriveLeagueFormat(league({ type: 0 }))).toMatchObject({ isDynasty: false, typeLabel: "Redraft", basis: "redraft" });
   });
 });

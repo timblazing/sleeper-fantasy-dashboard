@@ -50,6 +50,7 @@ const gradeOrder = (row: { surplusPerPick: number }) => row.surplusPerPick;
  * explains — expanding in place pushed the managers being compared off screen.
  */
 function ManagerTable({ data, onSelect }: { data: DraftGradeData; onSelect: (rosterId: number) => void }) {
+  const basis = data.basis;
   const [sort, setSort] = React.useState<Sort<ManagerSortKey>>({ key: "surplus", direction: "desc" });
   const scale = Math.max(...data.managers.map((manager) => Math.abs(manager.surplusPerPick)), 1);
   const managers = React.useMemo(() => {
@@ -115,7 +116,10 @@ function ManagerTable({ data, onSelect }: { data: DraftGradeData; onSelect: (ros
         </Table>
       </CardContent>
       <CardContent className="border-t pt-4 text-xs leading-relaxed text-muted-foreground">
-        Grades compare each player&apos;s current dynasty value against the expected value of the draft slot where they were selected. Surplus = current value − slot value. Hit rate = % of picks where the player is worth at least the pick used. Select any manager to see their pick-by-pick breakdown.
+        {basis === "dynasty"
+          ? "Grades compare each player’s current dynasty value against the expected value of the draft slot where they were selected."
+          : "Grades compare each player’s projected points per game above replacement against what the slot they were taken at returned across the class."}{" "}
+        Surplus = current value − slot value. Hit rate = % of picks where the player is worth at least the pick used. Select any manager to see their pick-by-pick breakdown.
       </CardContent>
     </Card>
   );
@@ -464,7 +468,9 @@ export function DraftWorkspace({ data, basePath }: { data: DraftGradeData; baseP
 
   return (
     <div className="flex flex-col gap-6">
-      {!data.curveBacked ? (
+      {/* A redraft class is *meant* to be benchmarked against itself — there is no rookie-pick
+          market to price a startup slot against — so only a dynasty league is missing something. */}
+      {!data.curveBacked && data.basis === "dynasty" ? (
         <Card className="ring-warning/40 bg-warning/5 py-3">
           <CardContent className="px-4 text-xs text-muted-foreground">
             RosterAudit&apos;s slot values are unavailable, so picks are benchmarked against the rest of their own class instead. Grades will shift once the curve returns.

@@ -1,8 +1,12 @@
-import { getMovers, getPicks, getPresets, getRankings, resolvePreset } from "@/lib/roster-audit";
-import type { Attribution, RaError, RaPick, RaPlayerValue, RaPreset } from "@/lib/roster-audit";
+import { deriveLeagueFormat, isSuperflexLeague } from "@/lib/league-features";
+import { toRedraftValues } from "@/lib/redraft-values";
+import { ROOM_POSITIONS } from "@/lib/roster-positions";
+import { getMovers, getPicks, getPresets, getProjectedPpg, getRankings, resolvePreset } from "@/lib/roster-audit";
+import type { Attribution, RaError, RaPick, RaPlayerValue, RaPreset, RaProjectedPlayer } from "@/lib/roster-audit";
 import { getLeague, getLeagueRosters, getLeagueUsers, getNflLeaguesForUsername } from "@/lib/sleeper";
 import type { RankingsQuery } from "@/lib/rankings-query";
 import type { SleeperLeague } from "@/lib/types";
+import type { ValueBasis } from "@/lib/value-basis";
 
 export const RANKINGS_PER_PAGE = 50; // rosteraudit-api-reference.md §2.4: the real per_page floor is 10; 50 matches the vendor UI.
 const FALLBACK_ATTRIBUTION: Attribution = { text: "Values by RosterAudit.com", url: "https://rosteraudit.com" };
@@ -14,6 +18,8 @@ export type RankingsRow = RankingsPlayerRow | RankingsPickRow;
 export type RankingsMover = { sleeperId: string; name: string; position: string; team: string | null; trend7d: number };
 export type RankingsView = {
   leagueId: string; leagueName: string; leagueSummary: string; isSuperflex: boolean;
+  /** Which currency every `value` on this board is quoted in. */
+  basis: ValueBasis;
   presetKey: string; presetLabel: string;
   rows: RankingsRow[]; total: number; totalLabel: string; page: number; totalPages: number; maxValue: number;
   movers: { risers: RankingsMover[]; fallers: RankingsMover[] } | null;
@@ -72,12 +78,95 @@ const shouldMergePicks = (query: RankingsQuery) => query.sort === "value" && que
 const ROOKIE_FETCH_PER_PAGE = 100;
 const isRookie = (player: RaPlayerValue) => player.yearsExp === 0;
 
+const describeRedraftLeague = (league: SleeperLeague): string =>
+  [`${league.settings.num_teams ?? 12}T`, isSuperflexLeague(league) ? "SF" : "1QB", "PPR"].join(" · ");
+
+/**
+ * The redraft board: every projected player, priced as points per game above the replacement
+ * this league's starting lineup implies.
+ *
+ * Everything is done here rather than upstream because `/projections/ppg-rankings` takes no
+ * filters worth using — it is one cheap cached read of the whole board, and replacement level is
+ * a league-wide comparison that a position-filtered request could not produce anyway. Picks and
+ * rookies have no meaning on this board, so those tabs collapse to the full list.
+ */
+async function redraftRankingsView(leagueId: string, league: SleeperLeague, query: RankingsQuery): Promise<RankingsResult> {
+  const [projected, ownership] = await Promise.all([getProjectedPpg(), loadOwnership(leagueId, query.username)]);
+  if (!projected.ok) return { ok: false, error: projected.error };
+
+  const values = toRedraftValues(projected.data, league);
+  const position = query.position === "picks" || query.position === "rookies" ? "all" : query.position;
+  const needle = query.search.trim().toLowerCase();
+
+  const matches = (player: RaProjectedPlayer) =>
+    (ROOM_POSITIONS as readonly string[]).includes(player.position)
+    && (position === "all" || player.position === position)
+    && (!needle || player.name.toLowerCase().includes(needle))
+    && (query.minAge === undefined || (player.age !== null && player.age >= query.minAge))
+    && (query.maxAge === undefined || (player.age !== null && player.age <= query.maxAge));
+
+  const ranked = projected.data
+    .filter(matches)
+    .map((player) => ({ player, value: values.get(player.sleeperId) ?? 0 }))
+    .toSorted((a, b) => {
+      if (query.sort === "name") return a.player.name.localeCompare(b.player.name);
+      // Nulls last, so an unknown age never claims the top of the youngest-first list.
+      if (query.sort === "age") return (a.player.age ?? Infinity) - (b.player.age ?? Infinity) || a.player.name.localeCompare(b.player.name);
+      return b.value - a.value || a.player.name.localeCompare(b.player.name);
+    });
+
+  // Position rank is the standing on the full board, not within the current filter, so "RB3"
+  // still means RB3 after a search narrows the page to one player.
+  const positionRank = new Map<string, number>();
+  for (const room of ROOM_POSITIONS) {
+    projected.data
+      .filter((player) => player.position === room)
+      .toSorted((a, b) => (values.get(b.sleeperId) ?? 0) - (values.get(a.sleeperId) ?? 0))
+      .forEach((player, index) => positionRank.set(player.sleeperId, index + 1));
+  }
+
+  const total = ranked.length;
+  const totalPages = Math.max(1, Math.ceil(total / RANKINGS_PER_PAGE));
+  const start = (query.page - 1) * RANKINGS_PER_PAGE;
+  const rows: RankingsRow[] = ranked.slice(start, start + RANKINGS_PER_PAGE).map(({ player, value }, index) => ({
+    kind: "player",
+    key: `player-${player.sleeperId}`,
+    rank: start + index + 1,
+    sleeperId: player.sleeperId,
+    name: player.name,
+    position: player.position,
+    team: player.team,
+    age: player.age,
+    tier: null,
+    value,
+    // The projection board publishes no movement, and a dynasty trend would be the wrong number.
+    trend7d: 0,
+    rankPosition: positionRank.get(player.sleeperId) ?? null,
+    photoUrl: null,
+    owner: ownership.get(player.sleeperId) ?? null,
+  }));
+
+  const format = deriveLeagueFormat(league);
+  return {
+    ok: true,
+    view: {
+      leagueId, leagueName: league.name, leagueSummary: describeRedraftLeague(league), isSuperflex: format.superflex,
+      basis: "redraft", presetKey: format.presetKey, presetLabel: "Projected PPG",
+      rows, total, totalLabel: `${total.toLocaleString()} ${total === 1 ? "player" : "players"}`,
+      page: query.page, totalPages, maxValue: rows.reduce((max, row) => Math.max(max, row.value), 0),
+      movers: null, attribution: projected.attribution,
+    },
+  };
+}
+
 export async function getRankingsView(leagueId: string, query: RankingsQuery): Promise<RankingsResult> {
   let league: SleeperLeague;
   if (leagueId === "demo") league = DEMO_LEAGUE;
   else {
     try { league = await getLeague(leagueId); } catch (error) { return { ok: false, error: upstream(error instanceof Error ? error.message : "Sleeper league unavailable") }; }
   }
+
+  if (deriveLeagueFormat(league).basis === "redraft") return redraftRankingsView(leagueId, league, query);
 
   const presetsResult = await getPresets();
   if (!presetsResult.ok) return { ok: false, error: presetsResult.error };
@@ -162,7 +251,7 @@ export async function getRankingsView(leagueId: string, query: RankingsQuery): P
     ok: true,
     view: {
       leagueId, leagueName: league.name, leagueSummary: describeLeague(league, preset), isSuperflex,
-      presetKey: preset.key, presetLabel: preset.label,
+      basis: "dynasty", presetKey: preset.key, presetLabel: preset.label,
       rows, total, totalLabel: `${total.toLocaleString()} ${picksOnly ? (total === 1 ? "pick" : "picks") : rookiesOnly ? (total === 1 ? "rookie" : "rookies") : total === 1 ? "player" : "players"}`,
       page: query.page, totalPages, maxValue, movers, attribution,
     },

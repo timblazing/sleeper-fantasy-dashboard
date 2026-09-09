@@ -18,7 +18,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar"
-import { ChevronsUpDownIcon, LockIcon, TrophyIcon } from "lucide-react"
+import { ChevronsUpDownIcon, TrophyIcon } from "lucide-react"
 import Link from "next/link"
 
 // The league logo, falling back to the trophy while it loads, when a league has none, or when
@@ -43,7 +43,9 @@ export function TeamSwitcher({
   teams,
 }: {
   activeTeam: { name: string; plan: string; logo?: string }
-  teams: { name: string; plan: string; url: string; logo?: string; disabled?: boolean; disabledReason?: string }[]
+  /** `plan` is the muted label beside each name — the league's format, so a manager who plays
+   *  several can tell which numbers a league will be quoted in before opening it. */
+  teams: { name: string; plan: string; url: string; logo?: string }[]
 }) {
   const { isMobile, setOpenMobile } = useSidebar()
 
@@ -98,21 +100,17 @@ export function TeamSwitcher({
                 <DropdownMenuItem
                   key={team.url}
                   className="gap-2 p-2"
-                  disabled={team.disabled}
                   onClick={() => {
                     if (isMobile) setOpenMobile(false)
                   }}
-                  // A disabled item stays inert text: rendering it as a link would still navigate.
-                  render={team.disabled ? undefined : <Link href={team.url} />}
+                  render={<Link href={team.url} />}
                 >
                   <div className="flex size-6 items-center justify-center overflow-hidden rounded-md border">
-                    {team.disabled ? <LockIcon className="size-4" /> : <LeagueLogo src={team.logo} className="size-4" />}
+                    <LeagueLogo src={team.logo} className="size-4" />
                   </div>
                   {team.name}
-                  {team.disabled && team.disabledReason ? (
-                    <span className="ml-auto pl-2 text-xs text-muted-foreground">
-                      {team.disabledReason}
-                    </span>
+                  {team.plan ? (
+                    <span className="ml-auto pl-2 text-xs text-muted-foreground">{team.plan}</span>
                   ) : null}
                 </DropdownMenuItem>
               ))}

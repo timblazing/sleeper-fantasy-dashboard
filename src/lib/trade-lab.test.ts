@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { resetRequestRateLimitForTests } from "@/lib/request-rate-limit";
-import { deriveTradeSettings } from "@/lib/trade-lab";
+import { makePlayer, makeTwelveTeamLeague } from "@/lib/test/fixtures";
+import { deriveTradeSettings, evaluateTrade } from "@/lib/trade-lab";
 import type { SleeperLeague } from "@/lib/types";
 
 const league = (overrides: Partial<SleeperLeague> = {}): SleeperLeague => ({
@@ -118,5 +119,65 @@ describe("POST /api/roster-audit/trade", () => {
     const independent = await post(body, evaluate, { "x-forwarded-for": "203.0.113.21" });
     expect(independent.response.status).toBe(200);
     expect(evaluate).toHaveBeenCalledTimes(21);
+  });
+});
+
+describe("evaluateTrade in a redraft league", () => {
+  /** A 12-team redraft league whose projection board prices four backs at 12/8/4/0 above replacement. */
+  const redraftSource = () => makeTwelveTeamLeague({
+    league: { roster_positions: ["RB"], settings: { type: 0, num_teams: 4 } },
+    source: {
+      getValues: async () => { throw new Error("a redraft trade must not read the dynasty board"); },
+      getProjectedPpg: async () => ({
+        ok: true,
+        attribution: { text: "RosterAudit", url: "https://rosteraudit.com" },
+        data: [22, 18, 14, 10].map((ppg, index) => ({ sleeperId: `p${index + 1}`, name: `Player ${index + 1}`, position: "RB", team: "KC", age: 25, ppg })),
+      }),
+      getPlayerCatalog: async () => new Map([1, 2, 3, 4].map((n) => [`p${n}`, makePlayer({ id: `p${n}`, name: `Player ${n}`, position: "RB" })])),
+    },
+  }).source;
+
+  const player = (id: string) => ({ type: "player" as const, id });
+
+  it("prices both sides in points above replacement and names the winner", async () => {
+    const result = await evaluateTrade("L1", [player("p1")], [player("p2")], redraftSource());
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.data.sideA.value).toBe(12);
+    expect(result.data.sideB.value).toBe(8);
+    expect(result.data.verdict.winner).toBe("sideA");
+    expect(result.data.verdict.difference).toBe(4);
+  });
+
+  it("calls an even swap even, with no winner", async () => {
+    const result = await evaluateTrade("L1", [player("p2")], [player("p2")], redraftSource());
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.data.verdict.winner).toBeNull();
+    expect(result.data.verdict.difference).toBe(0);
+    expect(result.data.verdict.grade).toBe("A+");
+  });
+
+  // Age-cliff risk is a dynasty concern, and RosterAudit's trade endpoint is never called at all.
+  it("returns no cliff warnings", async () => {
+    const result = await evaluateTrade("L1", [player("p1")], [player("p3")], redraftSource());
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.data.cliffWarnings).toEqual([]);
+  });
+
+  // The gap is read as a share of the bigger side, so the same absolute gap grades differently
+  // depending on how much is moving.
+  it("grades a gap against the size of the deal, not its absolute points", async () => {
+    const source = redraftSource();
+    const lopsided = await evaluateTrade("L1", [player("p1")], [player("p4")], source);
+    const proportionate = await evaluateTrade("L1", [player("p1"), player("p2")], [player("p1"), player("p3")], source);
+    expect(lopsided.ok && proportionate.ok).toBe(true);
+    if (!lopsided.ok || !proportionate.ok) return;
+    // 12 for nothing is the whole deal one-sided; 20 for 16 is the same 4-point gap inside a
+    // much bigger deal, which is a materially fairer trade.
+    expect(lopsided.data.verdict.grade).toBe("F");
+    expect(proportionate.data.verdict.difference).toBe(4);
+    expect(proportionate.data.verdict.grade).toBe("B");
   });
 });

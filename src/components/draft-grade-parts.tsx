@@ -7,10 +7,12 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
-const formatter = new Intl.NumberFormat("en-US");
+// Not rounded to an integer: dynasty values are whole already, and a redraft league's numbers are
+// points above replacement carried to a tenth, where rounding would collapse the whole scale.
+const formatter = new Intl.NumberFormat("en-US", { maximumFractionDigits: 1 });
 
-export const signed = (value: number) => `${value > 0 ? "+" : ""}${formatter.format(Math.round(value))}`;
-export const plain = (value: number) => formatter.format(Math.round(value));
+export const signed = (value: number) => `${value > 0 ? "+" : ""}${formatter.format(value)}`;
+export const plain = (value: number) => formatter.format(value);
 
 /**
  * Result color for a surplus number.

@@ -68,6 +68,8 @@ const emptyValues: Awaited<ReturnType<LeagueSource["getValues"]>> = { ok: true, 
 
 const emptyPickCurve: Awaited<ReturnType<LeagueSource["getPickCurve"]>> = { ok: true, data: { sf: {}, oneQb: {} }, attribution: { text: "RosterAudit", url: "https://rosteraudit.com" } };
 
+const emptyProjections: Awaited<ReturnType<LeagueSource["getProjectedPpg"]>> = { ok: true, data: [], attribution: { text: "RosterAudit", url: "https://rosteraudit.com" } };
+
 /** A source whose every read succeeds with nothing in it. Tests override only what they assert on. */
 export function makeSource(overrides: Partial<LeagueSource> = {}): LeagueSource {
   return {
@@ -84,6 +86,7 @@ export function makeSource(overrides: Partial<LeagueSource> = {}): LeagueSource 
     getLosersBracket: async () => [],
     getPlayerCatalog: async () => new Map(),
     getValues: async () => emptyValues,
+    getProjectedPpg: async () => emptyProjections,
     getPickCurve: async () => emptyPickCurve,
     getNflLeaguesForUsername: async () => { throw new Error("no account configured in this fixture"); },
     getWeekGamesByTeam: async () => new Map(),
@@ -106,10 +109,14 @@ export type TwelveTeamLeague = {
 /**
  * A coherent 12-team league: roster N has 12 - N wins so standings order is predictable, three
  * players each (`p{N}1`..`p{N}3`), and six head-to-head matchups pairing roster N with N + 6.
+ *
+ * Dynasty by default (`settings.type: 2`), because the `values` record it wires in is a dynasty
+ * value map — a redraft league reads its values from the projection board instead, so a test that
+ * wants that basis overrides `league.settings.type` and `source.getProjectedPpg` together.
  */
 export function makeTwelveTeamLeague(overrides: { league?: Partial<SleeperLeague>; source?: Partial<LeagueSource> } = {}): TwelveTeamLeague {
   const ids = Array.from({ length: 12 }, (_, index) => index + 1);
-  const league = makeLeague({ settings: { num_teams: 12, ...overrides.league?.settings }, ...overrides.league });
+  const league = makeLeague({ settings: { num_teams: 12, type: 2, ...overrides.league?.settings }, ...overrides.league });
   const users = ids.map((id) => makeUser({ user_id: `U${id}`, display_name: `Manager ${id}`, username: `manager${id}`, metadata: { team_name: `Team ${id}` } }));
   const positions = ["QB", "RB", "WR"];
   const catalog = new Map<string, NflPlayer>();

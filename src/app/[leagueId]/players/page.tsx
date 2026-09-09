@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { CloudOff, Hourglass, TriangleAlert } from "lucide-react";
-import { DynastyRequired } from "@/components/dynasty-required";
 import { PageHeader } from "@/components/page-header";
 import { RankingsToolbar } from "@/components/rankings-toolbar";
 import { RankingsTable } from "@/components/rankings-table";
@@ -10,6 +9,7 @@ import { getLeagueChrome } from "@/lib/league-chrome";
 import { getRankingsView } from "@/lib/rankings-data";
 import { parseRankingsQuery, type RankingsSearchParams } from "@/lib/rankings-query";
 import type { RaError } from "@/lib/roster-audit";
+import { basisMeta } from "@/lib/value-basis";
 
 export const metadata: Metadata = { title: "Players" };
 
@@ -28,29 +28,23 @@ const ERROR_STATES: Record<RaError["kind"], { title: string; description: string
 export default async function PlayersPage({ params, searchParams }: { params: Promise<{ leagueId: string }>; searchParams: Promise<RankingsSearchParams> }) {
   const [{ leagueId }, rawQuery] = await Promise.all([params, searchParams]);
   const query = parseRankingsQuery(rawQuery);
-  // getLeagueChrome is the cheap read the layout already performs; it supplies isDynasty
+  // getLeagueChrome is the cheap read the layout already performs; it supplies the value basis
   // without the full dashboard fetch a LeagueShell-owning page would need.
   const [league, result] = await Promise.all([getLeagueChrome(leagueId), getRankingsView(leagueId, query)]);
 
-  // Plan 003's gate: dynasty values are meaningless for a redraft or keeper league, so the
-  // whole page body is replaced rather than shown with numbers that do not apply.
-  if (!league.isDynasty)
-    return (
-      <div className="mx-auto flex w-full max-w-screen-2xl flex-col gap-6 p-4 md:p-6 lg:p-8">
-        <PageHeader description="Dynasty market values for every player, ranked and filterable." title="Players" />
-        <DynastyRequired feature="Players" leagueId={leagueId} />
-      </div>
-    );
+  // Dynasty leagues get the dynasty market board; every other format gets the same page priced
+  // in projected points above replacement. Neither ever sees the other's numbers.
+  const meta = basisMeta(league.basis);
 
   // The sidebar and chrome come from src/app/[leagueId]/layout.tsx, so this page renders
   // only its own content inside the standard container.
   return (
     <div className="mx-auto flex w-full max-w-screen-2xl flex-col gap-6 p-4 md:p-6 lg:p-8">
-      <PageHeader description="Dynasty market values for every player, ranked and filterable." title="Players" />
+      <PageHeader description={meta.blurb} title="Players" />
 
       {result.ok ? (
         <>
-          <RankingsToolbar leagueId={leagueId} query={query} />
+          <RankingsToolbar basis={result.view.basis} leagueId={leagueId} query={query} />
           <RankingsTable query={query} view={result.view} />
         </>
       ) : (

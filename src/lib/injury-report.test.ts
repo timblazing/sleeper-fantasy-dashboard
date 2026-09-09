@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { parseInjuryQuery } from "@/lib/injury-query";
 import { getInjuryReport, practiceLabel, selectInjuryEntries, severityOf } from "@/lib/injury-report";
-import { makePlayer, makeRoster, makeSource, makeUser } from "@/lib/test/fixtures";
+import { makeLeague, makePlayer, makeRoster, makeSource, makeUser } from "@/lib/test/fixtures";
 
 const catalog = new Map([
   ["healthy", makePlayer({ id: "healthy", name: "Healthy Harry" })],
@@ -21,6 +21,8 @@ const values = (data: Record<string, number>) => async () => ({
 
 const source = (players: string[], overrides: { reserve?: string[]; starters?: string[]; taxi?: string[]; values?: Record<string, number> } = {}) =>
   makeSource({
+    // Dynasty: `overrides.values` below is a dynasty value map.
+    getLeague: async () => makeLeague({ settings: { type: 2 } }),
     getPlayerCatalog: async () => catalog,
     getLeagueUsers: async () => [makeUser({ user_id: "U1", metadata: { team_name: "Team One" } })],
     getLeagueRosters: async () => [makeRoster({ roster_id: 1, owner_id: "U1", players, reserve: overrides.reserve ?? [], starters: overrides.starters ?? [], taxi: overrides.taxi ?? [] })],

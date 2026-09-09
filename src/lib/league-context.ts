@@ -2,6 +2,7 @@ import { deriveLeagueFormat, type LeagueFormat } from "@/lib/league-features";
 import { liveSource, type LeagueSource } from "@/lib/league-source";
 import type { MatchupPair, NflState, SleeperLeague, SleeperMatchup, SleeperRoster, SleeperUser, StandingRow } from "@/lib/types";
 import { points } from "@/lib/utils";
+import { sumValues } from "@/lib/value-basis";
 
 /** Identity only — league + state + format. What the sidebar shell needs. */
 export type LeagueIdentity = {
@@ -74,7 +75,7 @@ export function buildStandings(base: LeagueBase, playerValues: Record<string, nu
     .toSorted((a, b) => (b.settings.wins ?? 0) - (a.settings.wins ?? 0) || points(b.settings.fpts, b.settings.fpts_decimal) - points(a.settings.fpts, a.settings.fpts_decimal))
     .map((roster, index) => {
       const team = base.teamByRoster.get(roster.roster_id) ?? teamIdentity(roster);
-      const rosterValue = (roster.players ?? []).reduce((sum, id) => sum + (playerValues[id] ?? 0), 0);
+      const rosterValue = sumValues((roster.players ?? []).map((id) => playerValues[id] ?? 0));
       const settings = roster.settings;
       return {
         rank: index + 1, rosterId: team.rosterId, division: team.division, name: team.name, manager: team.manager, avatar: team.avatar,

@@ -5,12 +5,12 @@ import { makeLeague, makeSource, makeState } from "@/lib/test/fixtures";
 describe("getLeagueChrome", () => {
   it("reports the league type and dynasty flag from the league settings", async () => {
     const source = makeSource({ getLeague: async () => makeLeague({ name: "Dynasty Club", settings: { type: 2 } }) });
-    await expect(getLeagueChrome("L1", source)).resolves.toEqual({ id: "L1", name: "Dynasty Club", season: "2025", type: "Dynasty", isDynasty: true, isSuperflex: false, matchupWeek: 5, avatar: null });
+    await expect(getLeagueChrome("L1", source)).resolves.toEqual({ id: "L1", name: "Dynasty Club", season: "2025", type: "Dynasty", isDynasty: true, basis: "dynasty", isSuperflex: false, matchupWeek: 5, avatar: null });
   });
 
   it("falls back to week 1 for matchups outside the regular season", async () => {
     const source = makeSource({ getNflState: async () => makeState({ season_type: "pre", week: 3 }) });
-    await expect(getLeagueChrome("L1", source)).resolves.toMatchObject({ type: "Redraft", isDynasty: false, matchupWeek: 1 });
+    await expect(getLeagueChrome("L1", source)).resolves.toMatchObject({ type: "Redraft", isDynasty: false, basis: "redraft", matchupWeek: 1 });
   });
 
   // The player profile picks the superflex or the 1QB value by this flag. `sf ?? 1qb` was a
@@ -38,6 +38,6 @@ describe("getLeagueChrome", () => {
 describe("getLeagueChrome when the league cannot be read", () => {
   it("degrades to a named shell rather than throwing into the layout", async () => {
     const source = makeSource({ getLeague: async () => { throw new Error("404 Not Found"); } });
-    await expect(getLeagueChrome("bad-id", source)).resolves.toEqual({ id: "bad-id", name: "League unavailable", season: "", type: "Redraft", isDynasty: false, isSuperflex: false, matchupWeek: 1, avatar: null });
+    await expect(getLeagueChrome("bad-id", source)).resolves.toEqual({ id: "bad-id", name: "League unavailable", season: "", type: "Redraft", isDynasty: false, basis: "redraft", isSuperflex: false, matchupWeek: 1, avatar: null });
   });
 });
